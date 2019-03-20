@@ -26,6 +26,7 @@ before_install:
     - "wget https://nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz -O /tmp/unbound.tar.gz"
     - "pushd /tmp && tar -xvzf unbound.tar.gz && popd"
     - "pushd /tmp/unbound-* && ./configure && make && sudo make install && popd"
+    - cpanm ExtUtils::MakeMaker
 install:
     - cpanm --verbose --installdeps --notest .
 matrix:
