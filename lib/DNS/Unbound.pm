@@ -19,8 +19,10 @@ DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/
 
 use DNS::Unbound::X ();
 
+our $VERSION;
+
 BEGIN {
-    our $VERSION = 0.01;
+    $VERSION = 0.01;
 }
 
 require XSLoader;
