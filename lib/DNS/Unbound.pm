@@ -9,6 +9,12 @@ use warnings;
 
 DNS::Unbound - NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/about/> in Perl
 
+=head1 SYNOPSIS
+
+    my $unbound = DNS::Unbound->new()->set_option( verbosity => 2 );
+
+    my $result = $unbound->resolve( 'cpan.org', 'A' );
+
 =cut
 
 our $VERSION = 0.01;
@@ -17,6 +23,7 @@ use constant RR => {
     A => 1,
     AAAA => 28,
     AFSDB => 18,
+    ANY => 255,
     APL => 42,
     CAA => 257,
     CDNSKEY => 60,
@@ -57,6 +64,19 @@ use constant RR => {
     URI => 256,
 };
 
+use constant _ctx_err => {
+    -1 => 'socket error',
+    -2 => 'alloc failure',
+    -3 => 'syntax error',
+    -4 => 'DNS service failed',
+    -5 => 'fork() failed',
+    -6 => 'cfg change after finalize()',
+    -7 => 'initialization failed (bad settings)',
+    -8 => 'error in pipe communication with async bg worker',
+    -9 => 'error reading from file',
+    -10 => 'async_id does not exist or result already been delivered',
+};
+
 require XSLoader;
 
 XSLoader::load();
@@ -68,13 +88,38 @@ sub new {
 }
 
 sub resolve {
-    my $result = _resolve( $_[0][0], @_[ 1 .. $#_ ] );
+    my $type = $_[2] || die 'Need type!';
+    $type = RR()->{$type} || $type;
+
+    my $result = _resolve( $_[0][0], $_[1], $type, $_[3] || () );
 
     if (!ref($result)) {
         die DNS::Unbound::X->create('ResolveError', number => $result, string => _ub_strerror($result));
     }
 
     return $result;
+}
+
+sub set_option {
+    my $err = _ub_ctx_set_option( $_[0][0], "$_[1]:", $_[2] );
+
+    if ($err) {
+        my $str = _ctx_err()->{$err} || "Unknown error code: $err";
+        die "Failed to set “$_[1]” ($_[2]): $str";
+    }
+
+    return $_[0];
+}
+
+sub get_option {
+    my $got = _ub_ctx_get_option( $_[0][0], "$_[1]:" );
+
+    if (!ref($got)) {
+        my $str = _ctx_err()->{$got} || "Unknown error code: $got";
+        die "Failed to get “$_[1]”: $str";
+    }
+
+    return $$got;
 }
 
 sub DESTROY {

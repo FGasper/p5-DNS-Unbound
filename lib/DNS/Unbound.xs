@@ -2,6 +2,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <unbound.h>    /* unbound API */
 
 static SV * _my_err( const char *class, AV *args ) {
@@ -34,6 +36,34 @@ _create_context()
     OUTPUT:
         RETVAL
 
+int
+_ub_ctx_set_option( struct ub_ctx *ctx, const char* opt, const char* val)
+    CODE:
+        RETVAL = ub_ctx_set_option(ctx, opt, val);
+    OUTPUT:
+        RETVAL
+
+SV *
+_ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
+    CODE:
+        char *str;
+
+        int fate = ub_ctx_get_option(ctx, opt, &str);
+
+        if (fate) {
+            RETVAL = fate;
+        }
+        else {
+            SV *val = newSVpv(str, 0);
+            sv_force_normal(val);
+
+            RETVAL = newRV_inc(val);
+        }
+
+        free(str);
+    OUTPUT:
+        RETVAL
+
 SV *
 _ub_strerror( int err )
     CODE:
@@ -53,26 +83,70 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
             RETVAL = newSVnv(retval);
         }
         else {
+            SV *val;
+
+            // We have to sv_force_normal() all of the result values
+            // because we’ll reap &result below.
+
             AV *data = newAV();
             unsigned int i = 0;
-            while (result->data[i] != NULL) {
-                av_push(data, newSVpvn(result->data[i], result->len[i]));
-                i++;
+
+            if (result->data != NULL) {
+                while (result->data[i] != NULL) {
+                    val = newSVpvn(result->data[i], result->len[i]);
+                    sv_force_normal(val);
+                    av_push(data, val);
+                    i++;
+                }
             }
 
             HV * rh = newHV();
-            hv_store(rh, "qname", 5, newSVpv(result->qname, 0), 0);
-            hv_store(rh, "qtype", 5, newSVnv(result->qtype), 0);
-            hv_store(rh, "qclass", 6, newSVnv(result->qtype), 0);
+
+            val = newSVpv(result->qname, 0);
+            sv_force_normal(val);
+            hv_store(rh, "qname", 5, val, 0);
+
+            val = newSVnv(result->qtype);
+            sv_force_normal(val);
+            hv_store(rh, "qtype", 5, val, 0);
+
+            val = newSVnv(result->qclass);
+            sv_force_normal(val);
+            hv_store(rh, "qclass", 6, val, 0);
+
             hv_store(rh, "data", 4, newRV_inc((SV *)data), 0);
-            hv_store(rh, "canonname", 9, newSVpv(result->canonname, 0), 0);
-            hv_store(rh, "rcode", 5, newSVnv(result->rcode), 0);
-            hv_store(rh, "havedata", 8, newSVnv(result->havedata), 0);
-            hv_store(rh, "nxdomain", 8, newSVnv(result->nxdomain), 0);
-            hv_store(rh, "secure", 6, newSVnv(result->secure), 0);
-            hv_store(rh, "bogus", 5, newSVnv(result->bogus), 0);
-            hv_store(rh, "why_bogus", 9, newSVpv(result->why_bogus, 0), 0);
-            hv_store(rh, "ttl", 3, newSVnv(result->ttl), 0);
+
+            val = newSVpv(result->canonname, 0);
+            sv_force_normal(val);
+            hv_store(rh, "canonname", 9, val, 0);
+
+            val = newSVnv(result->rcode);
+            sv_force_normal(val);
+            hv_store(rh, "rcode", 5, val, 0);
+
+            val = newSVnv(result->havedata);
+            sv_force_normal(val);
+            hv_store(rh, "havedata", 8, val, 0);
+
+            val = newSVnv(result->nxdomain);
+            sv_force_normal(val);
+            hv_store(rh, "nxdomain", 8, val, 0);
+
+            val = newSVnv(result->secure);
+            sv_force_normal(val);
+            hv_store(rh, "secure", 6, val, 0);
+
+            val = newSVnv(result->bogus);
+            sv_force_normal(val);
+            hv_store(rh, "bogus", 5, val, 0);
+
+            val = newSVpv(result->why_bogus, 0);
+            sv_force_normal(val);
+            hv_store(rh, "why_bogus", 9, val, 0);
+
+            val = newSVnv(result->ttl);
+            sv_force_normal(val);
+            hv_store(rh, "ttl", 3, val, 0);
 
             RETVAL = newRV_inc((SV *)rh);
         }
