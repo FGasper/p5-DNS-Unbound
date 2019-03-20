@@ -73,6 +73,8 @@ sub resolve {
     if (!ref($result)) {
         die DNS::Unbound::X->create('ResolveError', number => $result, string => _ub_strerror($result));
     }
+
+    return $result;
 }
 
 sub DESTROY {

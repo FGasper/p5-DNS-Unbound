@@ -1,6 +1,8 @@
 .gitignore
 LICENSE
+MANIFEST
 Makefile.PL
+README.md
 lib/DNS/Unbound.pm
 lib/DNS/Unbound.xs
 lib/DNS/Unbound/X.pm
