@@ -25,7 +25,7 @@ perl:
 before_install:
     - "wget https://nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz -O /tmp/unbound.tar.gz"
     - "tar -xvzf /tmp/unbound.tar.gz"
-    - "pushd /tar && ./configure && make && sudo make install && popd"
+    - "pushd /tmp && ./configure && make && sudo make install && popd"
 install:
     - cpanm --verbose --installdeps --notest .
 matrix:
