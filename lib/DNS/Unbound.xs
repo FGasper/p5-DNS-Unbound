@@ -2,15 +2,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <unbound.h>    /* unbound API */
-
-static SV * _my_err( const char *class, AV *args ) {
-    HV *pkg = gv_stashpv(class, GV_ADD);
-
-    return sv_bless( newRV_inc((SV *)args), pkg );
-}
 
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
@@ -44,7 +36,7 @@ _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
         int fate = ub_ctx_get_option(ctx, opt, &str);
 
         if (fate) {
-            RETVAL = fate;
+            RETVAL = newSVnv(fate);
         }
         else {
             SV *val = newSVpv(str, 0);
@@ -57,7 +49,7 @@ _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
     OUTPUT:
         RETVAL
 
-SV *
+char *
 _ub_strerror( int err )
     CODE:
         RETVAL = ub_strerror(err);
