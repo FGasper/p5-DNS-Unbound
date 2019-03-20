@@ -36,12 +36,15 @@ _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
         int fate = ub_ctx_get_option(ctx, opt, &str);
 
         if (fate) {
+
+            // On failure, return a plain SV that gives the error.
             RETVAL = newSVnv(fate);
         }
         else {
             SV *val = newSVpv(str, 0);
             sv_force_normal(val);
 
+            // On success, return a reference to an SV that gives the value.
             RETVAL = newRV_inc(val);
         }
 

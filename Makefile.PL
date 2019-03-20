@@ -10,7 +10,8 @@ my $ldflags = `pkg-config --libs $pkgconfig_name`;
 chomp for $cflags, $ldflags;
 
 # Just in case.
-$ldflags ||= '-lunbound';
+#$ldflags ||= '-lunbound';
+$ldflags = '-lunbound';
 
 WriteMakefile(
     NAME           => 'DNS::Unbound',
