@@ -168,7 +168,7 @@ Decodes a DNS name. Useful for, e.g., C<NS> query results.
 
 sub decode_name {
     shift if $_[0]->isa(__PACKAGE__);
-    return join( '.', unpack( 'C/a', $_[0] ) );
+    return join( '.', unpack( '(C/a)*', $_[0] ) );
 }
 
 =head2 $strings_ar = decode_character_strings($encoded)
@@ -180,7 +180,7 @@ Returns an array reference of strings.
 
 sub decode_character_strings {
     shift if $_[0]->isa(__PACKAGE__);
-    return [ unpack( 'C/a', $_[0] ) ];
+    return [ unpack( '(C/a)*', $_[0] ) ];
 }
 
 sub DESTROY {
