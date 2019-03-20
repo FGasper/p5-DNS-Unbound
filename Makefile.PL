@@ -13,7 +13,6 @@ chomp for $cflags, $ldflags;
 WriteMakefile(
     NAME           => 'DNS::Unbound',
     VERSION_FROM   => 'lib/DNS/Unbound.pm',
-    PREREQ_PM      => { 'ExtUtils::MakeMaker' => '7.12' },
     ABSTRACT_FROM  => 'lib/DNS/Unbound.pm',
     AUTHOR         => 'Felipe Gasper (FELIPE)',
     CCFLAGS        => "$cflags -Wall -std=c99",
@@ -22,6 +21,7 @@ WriteMakefile(
     XSMULTI        => 1,
 
     PREREQ_PM => {
+        'ExtUtils::MakeMaker' => '7.12',
         'X::Tiny' => 0,
     },
 

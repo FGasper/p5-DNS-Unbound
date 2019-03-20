@@ -16,13 +16,6 @@ MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
 
-TYPEMAP: <<HERE
-
-TYPEMAP
-struct ub_ctx*  T_PTROBJ
-
-HERE
-
 struct ub_ctx*
 _create_context()
     CODE:

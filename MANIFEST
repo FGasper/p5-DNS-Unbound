@@ -10,3 +10,4 @@ lib/DNS/Unbound/X.pm
 lib/DNS/Unbound/X/Base.pm
 lib/DNS/Unbound/X/ResolveError.pm
 t/load.t
+typemap
