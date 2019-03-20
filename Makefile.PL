@@ -1,4 +1,3 @@
-use 5.008005;
 use ExtUtils::MakeMaker 7.12; # for XSMULTI option
 
 my $pkgconfig_name = 'libunbound';
