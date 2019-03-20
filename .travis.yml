@@ -16,7 +16,8 @@ perl:
 #  - "5.8"
 #  - "5.6"
 before_install:
-    - "sudo apt-get install libunbound-dev"
+    - "sudo apt-get install apt-file unbound libunbound-dev"
+    - "apt-file show libunbound-dev"
 install:
     - cpanm --verbose --installdeps --notest .
 matrix:
