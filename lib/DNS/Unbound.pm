@@ -7,7 +7,7 @@ use warnings;
 
 =head1 NAME
 
-DNS::Unbound - NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/about/> in Perl
+DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/>
 
 =head1 SYNOPSIS
 
@@ -17,7 +17,15 @@ DNS::Unbound - NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/abo
 
 =cut
 
-our $VERSION = 0.01;
+use DNS::Unbound::X ();
+
+BEGIN {
+    our $VERSION = 0.01;
+}
+
+require XSLoader;
+
+XSLoader::load( __PACKAGE__, $VERSION );
 
 use constant RR => {
     A => 1,
@@ -64,6 +72,7 @@ use constant RR => {
     URI => 256,
 };
 
+# Copied from libunbound
 use constant _ctx_err => {
     -1 => 'socket error',
     -2 => 'alloc failure',
@@ -77,15 +86,34 @@ use constant _ctx_err => {
     -10 => 'async_id does not exist or result already been delivered',
 };
 
-require XSLoader;
+#----------------------------------------------------------------------
 
-XSLoader::load();
+=head1 METHODS
 
-use DNS::Unbound::X ();
+=head2 I<CLASS>->new()
+
+Instantiates this class.
+
+=cut
 
 sub new {
     bless [ _create_context() ], shift;
 }
+
+=head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
+
+Runs a query. Returns a reference to a hash with members C<qname>,
+C<qtype>, C<qclass>, C<data>, C<canonname>, C<rcode>, C<havedata>,
+C<nxdomain>, C<secure>, C<bogus>, C<why_bogus>, and C<ttl>.
+See L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>
+for details.
+
+Note that the items in C<data> are in their DNS-native encodings.
+(libunbound doesn’t track which record type uses which encoding, so
+neither does DNS::Unbound.)
+To decode some common record types, see L</CONVENIENCE FUNCTIONS> below.
+
+=cut
 
 sub resolve {
     my $type = $_[2] || die 'Need type!';
@@ -120,6 +148,39 @@ sub get_option {
     }
 
     return $$got;
+}
+
+#----------------------------------------------------------------------
+
+=head1 CONVENIENCE FUNCTIONS
+
+Note that C<inet_ntoa()> and C<inet_ntop> (useful to decode C<A> and
+C<AAAA> records, respectively) are provided by L<Socket>.
+
+The following may be called either as object methods or as static
+functions:
+
+=head2 $decoded = decode_name($encoded)
+
+Decodes a DNS name. Useful for, e.g., C<NS> query results.
+
+=cut
+
+sub decode_name {
+    shift if $_[0]->isa(__PACKAGE__);
+    return join( '.', unpack( 'C/a', $_[0] ) );
+}
+
+=head2 $strings_ar = decode_character_strings($encoded)
+
+Decodes a single TXT record into its component character-strings.
+Returns an array reference of strings.
+
+=cut
+
+sub decode_character_strings {
+    shift if $_[0]->isa(__PACKAGE__);
+    return [ unpack( 'C/a', $_[0] ) ];
 }
 
 sub DESTROY {

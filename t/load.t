@@ -17,9 +17,10 @@ diag explain( [$dns] );
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
 
-my $result = $dns->resolve( 'felipegasper.com', 'NS' );
+my $result = $dns->resolve( 'felipegasper.com', 'TXT' );
 
 #$_ = join('.', unpack '(C/a)*', $_) for @{ $result->{'data'} };
+$_ = $dns->decode_character_strings($_) for @{ $result->{'data'} };
 
 diag explain $result;
 
