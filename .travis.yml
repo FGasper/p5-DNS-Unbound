@@ -15,10 +15,19 @@ perl:
   - "5.10"
 #  - "5.8"
 #  - "5.6"
+install:
+    - cpanm --installdeps --notest .
 matrix:
   include:
+    - os: linux
+      before_install:
+        - "sudo apt-get install libunbound-dev"
     - os: osx
       perl: system
+      addons:
+        homebrew:
+          packages:
+            - unbound
       before_install:
         - "curl -L http://cpanmin.us | perl - --self-upgrade"
         - export PATH=$PATH:$HOME/perl5/bin
