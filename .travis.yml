@@ -20,18 +20,16 @@ perl:
 #    - "sudo apt-get install apt-file unbound libunbound-dev"
 #    - "apt-file update"
 #    - "apt-file show libunbound-dev"
+# Travis CI’s libunbound-dev package lacks a .pc file,
+# so let’s install from source instead.
+before_install:
+    - "wget https://nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz -O /tmp/unbound.tar.gz"
+    - "tar -xvzf /tmp/unbound.tar.gz"
+    - "pushd /tar && ./configure && make && sudo make install && popd"
 install:
     - cpanm --verbose --installdeps --notest .
 matrix:
   include:
-
-    # Travis CI’s libunbound-dev package lacks a .pc file,
-    # so let’s install from source instead.
-    - os: linux
-      before_install:
-        - "wget https://nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz -O /tmp/unbound.tar.gz"
-        - "tar -xvzf /tmp/unbound.tar.gz"
-        - "pushd /tar && ./configure && make && sudo make install && popd"
     - os: osx
       perl: system
       addons:
