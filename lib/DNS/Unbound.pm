@@ -17,6 +17,8 @@ DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/
 
 =cut
 
+#----------------------------------------------------------------------
+
 use DNS::Unbound::X ();
 
 our $VERSION;
@@ -184,6 +186,8 @@ sub decode_character_strings {
     shift if $_[0]->isa(__PACKAGE__);
     return [ unpack( '(C/a)*', $_[0] ) ];
 }
+
+#----------------------------------------------------------------------
 
 sub DESTROY {
     _destroy_context( $_[0][0] );

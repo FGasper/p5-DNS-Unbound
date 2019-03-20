@@ -2,13 +2,15 @@ use ExtUtils::MakeMaker 7.12; # for XSMULTI option
 
 my $pkgconfig_name = 'libunbound';
 
-#my $cflags = `pkg-config --static --libs --cflags $pkgconfig_name`;
+# If these fail, just assume that libunbound is installed
+# and is reachable simply via -lunbound.
 my $cflags = `pkg-config --cflags $pkgconfig_name`;
-die if $?;
-
 my $ldflags = `pkg-config --libs $pkgconfig_name`;
 
 chomp for $cflags, $ldflags;
+
+# Just in case.
+$ldflags ||= '-lunbound';
 
 WriteMakefile(
     NAME           => 'DNS::Unbound',
