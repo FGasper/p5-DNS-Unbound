@@ -21,11 +21,9 @@ Instantiates this class.
 
 ## $result\_hr = _OBJ_->resolve( $NAME, $TYPE \[, $CLASS \] )
 
-Runs a query. Returns a reference to a hash with members `qname`,
-`qtype`, `qclass`, `data`, `canonname`, `rcode`, `havedata`,
-`nxdomain`, `secure`, `bogus`, `why_bogus`, and `ttl`.
-See [libunbound(3)](https://nlnetlabs.nl/documentation/unbound/libunbound/)
-for details.
+Runs a synchronous query. Returns a reference to a hash that corresponds
+to a libunbound `struct ub_result` (cf. [libunbound(3)](https://nlnetlabs.nl/documentation/unbound/libunbound/)),
+excluding `len`, `answer_packet`, and `answer_len`.
 
 **NOTE:** Members of `data` are in their DNS-native encodings.
 (libunbound doesn’t track which record type uses which encoding, so

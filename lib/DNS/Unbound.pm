@@ -24,8 +24,9 @@ resolver library.
 
 #----------------------------------------------------------------------
 
-use DNS::Unbound::X ();
 use XSLoader ();
+
+use DNS::Unbound::X ();
 
 our ($VERSION);
 
@@ -109,11 +110,9 @@ sub new {
 
 =head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
 
-Runs a query. Returns a reference to a hash with members C<qname>,
-C<qtype>, C<qclass>, C<data>, C<canonname>, C<rcode>, C<havedata>,
-C<nxdomain>, C<secure>, C<bogus>, C<why_bogus>, and C<ttl>.
-See L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>
-for details.
+Runs a synchronous query. Returns a reference to a hash that corresponds
+to a libunbound C<struct ub_result> (cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>),
+excluding C<len>, C<answer_packet>, and C<answer_len>.
 
 B<NOTE:> Members of C<data> are in their DNS-native encodings.
 (libunbound doesn’t track which record type uses which encoding, so
