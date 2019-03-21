@@ -133,7 +133,7 @@ sub resolve {
 }
 
 sub set_option {
-    my $err = _ub_ctx_set_option( $_[0][0], "$_[1]:", $_[2] );
+    my $err = _ub_ctx_set_option( $_[0][0], $_[1], $_[2] );
 
     if ($err) {
         my $str = _ctx_err()->{$err} || "Unknown error code: $err";

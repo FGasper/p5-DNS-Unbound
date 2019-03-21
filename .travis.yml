@@ -16,8 +16,9 @@ perl:
 #  - "5.8"
 #  - "5.6"
 before_install:
-# Travis CI’s libunbound-dev package lacks a .pc file,
-# so let’s install from source instead.
+# Travis CI’s libunbound-dev package lacks a .pc file.
+# It shouldn’t be needed, but this does an install from source
+# instead of using apt.
 #    - "wget https://nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz -O /tmp/unbound.tar.gz"
 #    - "pushd /tmp && tar -xvzf unbound.tar.gz && popd"
 #    - "pushd /tmp/unbound-* && ./configure && make && sudo make install && popd"
