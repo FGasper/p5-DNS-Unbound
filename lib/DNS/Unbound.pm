@@ -25,16 +25,14 @@ resolver library.
 #----------------------------------------------------------------------
 
 use DNS::Unbound::X ();
+use XSLoader ();
 
 our ($VERSION);
 
 BEGIN {
     $VERSION = '0.01_02';
+    XSLoader::load();
 }
-
-use XSLoader;
-
-XSLoader::load();
 
 use constant RR => {
     A => 1,
