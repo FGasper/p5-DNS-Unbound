@@ -7,18 +7,20 @@ use warnings;
 
 =head1 NAME
 
-DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/>
+DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver
 
 =head1 SYNOPSIS
 
-    my $unbound = DNS::Unbound->new()->set_option( verbosity => 2 );
+    my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
 
-    my $result = $unbound->resolve( 'cpan.org', 'A' );
+    my $verbosity = $dns->get_option( 'verbosity' );
 
-=head1 DESCRIPTION
+    $dns->set_option( verbosity => 1 + $verbosity );
 
-This library implements recursive DNS queries via a popular C-based
-resolver library.
+    my $res_hr = $dns->resolve( 'cpan.org', 'NS' );
+
+    # See below about encodings in “data”.
+    my @ns = map { $dns->decode_name($_) } @{ $res_hr->{'data'} };
 
 =cut
 
@@ -31,7 +33,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.01_02';
+    $VERSION = '0.01_03';
     XSLoader::load();
 }
 
@@ -110,11 +112,16 @@ sub new {
 
 =head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
 
-Runs a synchronous query. Returns a reference to a hash that corresponds
-to a libunbound C<struct ub_result> (cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>),
+Runs a synchronous query for a given $NAME and $TYPE. $TYPE may be
+expressed numerically or, for convenience, as a string. $CLASS is
+optional and defaults to 1 (C<IN>), which is probably what you want.
+
+Returns a reference to a hash that corresponds
+to a libunbound C<struct ub_result>
+(cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>),
 excluding C<len>, C<answer_packet>, and C<answer_len>.
 
-B<NOTE:> Members of C<data> are in their DNS-native encodings.
+B<NOTE:> Members of C<data> are in their DNS-native RDATA encodings.
 (libunbound doesn’t track which record type uses which encoding, so
 neither does DNS::Unbound.)
 To decode some common record types, see L</CONVENIENCE FUNCTIONS> below.
@@ -160,8 +167,8 @@ sub get_option {
 
 =head1 CONVENIENCE FUNCTIONS
 
-Note that L<Socket> provides C<inet_ntoa()> and C<inet_ntop> functions
-for decoding C<A> and C<AAAA> records.
+Note that L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
+functions for decoding C<A> and C<AAAA> records.
 
 The following may be called either as object methods or as static
 functions (but not as class methods):
