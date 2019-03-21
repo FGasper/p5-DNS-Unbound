@@ -26,8 +26,9 @@ WriteMakefile(
     XSMULTI        => 1,
 
     PREREQ_PM => {
-        'ExtUtils::MakeMaker' => '7.12',
+        'ExtUtils::MakeMaker' => 7.12,
         'X::Tiny' => 0,
+        'XSLoader' => 0.27,
     },
 
     TEST_REQUIRES => {
