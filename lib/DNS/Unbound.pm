@@ -29,7 +29,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.01';
+    $VERSION = '0.01_01';
 }
 
 use XSLoader;
@@ -179,7 +179,7 @@ trailing NUL byte in an encoded DNS name.
 =cut
 
 sub decode_name {
-    shift if (ref $_[0])->isa(__PACKAGE__);
+    shift if (ref $_[0]) && (ref $_[0])->isa(__PACKAGE__);
     return join( '.', @{ decode_character_strings($_[0]) } );
 }
 
@@ -191,7 +191,7 @@ returned as an array reference. Useful for C<TXT> query results.
 =cut
 
 sub decode_character_strings {
-    shift if (ref $_[0])->isa(__PACKAGE__);
+    shift if (ref $_[0]) && (ref $_[0])->isa(__PACKAGE__);
     return [ unpack( '(C/a)*', $_[0] ) ];
 }
 
