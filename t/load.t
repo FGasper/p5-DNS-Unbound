@@ -8,22 +8,16 @@ use Test::More;
 use_ok('DNS::Unbound');
 
 my $dns = DNS::Unbound->new();
-#$dns->set_option( verbosity => 2 );
 
-diag explain( [ 'verbosity' => $dns->get_option('verbosity') ] );
+eval {
+    my $result = $dns->resolve( 'cannot.exist.invalid', 'NS' );
 
-diag explain( [$dns] );
+    diag explain $result;
 
-use Data::Dumper;
-$Data::Dumper::Useqq = 1;
+    $result = $dns->resolve('com', 'NS');
+    $_ = $dns->decode_name($_) for @{ $result->{'data'} };
 
-my $result = $dns->resolve( 'felipegasper.com', 'TXT' );
-
-#$_ = join('.', unpack '(C/a)*', $_) for @{ $result->{'data'} };
-$_ = $dns->decode_character_strings($_) for @{ $result->{'data'} };
-
-diag explain $result;
-
-diag 'after resolve';
+    diag explain $result;
+};
 
 done_testing();

@@ -15,6 +15,11 @@ DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/
 
     my $result = $unbound->resolve( 'cpan.org', 'A' );
 
+=head1 DESCRIPTION
+
+This library implements recursive DNS queries via a popular C-based
+resolver library.
+
 =cut
 
 #----------------------------------------------------------------------
@@ -24,7 +29,7 @@ use DNS::Unbound::X ();
 our $VERSION;
 
 BEGIN {
-    $VERSION = 0.01;
+    $VERSION = '0.01-TRIAL1';
 }
 
 require XSLoader;
@@ -112,7 +117,7 @@ C<nxdomain>, C<secure>, C<bogus>, C<why_bogus>, and C<ttl>.
 See L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>
 for details.
 
-Note that the items in C<data> are in their DNS-native encodings.
+B<NOTE:> Members of C<data> are in their DNS-native encodings.
 (libunbound doesn’t track which record type uses which encoding, so
 neither does DNS::Unbound.)
 To decode some common record types, see L</CONVENIENCE FUNCTIONS> below.
@@ -158,27 +163,30 @@ sub get_option {
 
 =head1 CONVENIENCE FUNCTIONS
 
-Note that C<inet_ntoa()> and C<inet_ntop> (useful to decode C<A> and
-C<AAAA> records, respectively) are provided by L<Socket>.
+Note that L<Socket> provides C<inet_ntoa()> and C<inet_ntop> functions
+for decoding C<A> and C<AAAA> records.
 
 The following may be called either as object methods or as static
-functions:
+functions (but not as class methods):
 
 =head2 $decoded = decode_name($encoded)
 
 Decodes a DNS name. Useful for, e.g., C<NS> query results.
 
+Note that this will normally include a trailing C<.> because of the
+trailing NUL byte in an encoded DNS name.
+
 =cut
 
 sub decode_name {
     shift if $_[0]->isa(__PACKAGE__);
-    return join( '.', unpack( '(C/a)*', $_[0] ) );
+    return join( '.', @{ decode_character_strings($_[0]) } );
 }
 
 =head2 $strings_ar = decode_character_strings($encoded)
 
-Decodes a single TXT record into its component character-strings.
-Returns an array reference of strings.
+Decodes a list of character-strings into component strings,
+returned as an array reference. Useful for C<TXT> query results.
 
 =cut
 
@@ -192,5 +200,11 @@ sub decode_character_strings {
 sub DESTROY {
     _destroy_context( $_[0][0] );
 }
+
+#----------------------------------------------------------------------
+
+=head1 REPOSITORY
+
+L<https://github.com/FGasper/p5-DNS-Unbound>
 
 1;
