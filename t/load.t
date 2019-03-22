@@ -7,6 +7,10 @@ use Test::More;
 
 use_ok('DNS::Unbound');
 
+ok( DNS::Unbound->unbound_version() );
+
+diag( "Unbound version: " . DNS::Unbound->unbound_version() );
+
 my $dns = DNS::Unbound->new();
 
 eval {

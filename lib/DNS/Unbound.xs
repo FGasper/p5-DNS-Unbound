@@ -42,7 +42,6 @@ _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
         }
         else {
             SV *val = newSVpv(str, 0);
-            sv_force_normal(val);
 
             // On success, return a reference to an SV that gives the value.
             RETVAL = newRV_inc(val);
@@ -52,7 +51,7 @@ _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
     OUTPUT:
         RETVAL
 
-char *
+const char *
 _ub_strerror( int err )
     CODE:
         RETVAL = ub_strerror(err);
@@ -73,16 +72,12 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
         else {
             SV *val;
 
-            // We have to sv_force_normal() all of the result values
-            // because we’ll reap &result below.
-
             AV *data = newAV();
             unsigned int i = 0;
 
             if (result->data != NULL) {
                 while (result->data[i] != NULL) {
                     val = newSVpvn(result->data[i], result->len[i]);
-                    sv_force_normal(val);
                     av_push(data, val);
                     i++;
                 }
@@ -91,50 +86,39 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
             HV * rh = newHV();
 
             val = newSVpv(result->qname, 0);
-            sv_force_normal(val);
-            hv_store(rh, "qname", 5, val, 0);
+            hv_stores(rh, "qname", val);
 
             val = newSVnv(result->qtype);
-            sv_force_normal(val);
-            hv_store(rh, "qtype", 5, val, 0);
+            hv_stores(rh, "qtype", val);
 
             val = newSVnv(result->qclass);
-            sv_force_normal(val);
-            hv_store(rh, "qclass", 6, val, 0);
+            hv_stores(rh, "qclass", val);
 
-            hv_store(rh, "data", 4, newRV_inc((SV *)data), 0);
+            hv_stores(rh, "data", newRV_inc((SV *)data));
 
             val = newSVpv(result->canonname, 0);
-            sv_force_normal(val);
-            hv_store(rh, "canonname", 9, val, 0);
+            hv_stores(rh, "canonname", val);
 
             val = newSVnv(result->rcode);
-            sv_force_normal(val);
-            hv_store(rh, "rcode", 5, val, 0);
+            hv_stores(rh, "rcode", val);
 
             val = newSVnv(result->havedata);
-            sv_force_normal(val);
-            hv_store(rh, "havedata", 8, val, 0);
+            hv_stores(rh, "havedata", val);
 
             val = newSVnv(result->nxdomain);
-            sv_force_normal(val);
-            hv_store(rh, "nxdomain", 8, val, 0);
+            hv_stores(rh, "nxdomain", val);
 
             val = newSVnv(result->secure);
-            sv_force_normal(val);
-            hv_store(rh, "secure", 6, val, 0);
+            hv_stores(rh, "secure", val);
 
             val = newSVnv(result->bogus);
-            sv_force_normal(val);
-            hv_store(rh, "bogus", 5, val, 0);
+            hv_stores(rh, "bogus", val);
 
             val = newSVpv(result->why_bogus, 0);
-            sv_force_normal(val);
-            hv_store(rh, "why_bogus", 9, val, 0);
+            hv_stores(rh, "why_bogus", val);
 
             val = newSVnv(result->ttl);
-            sv_force_normal(val);
-            hv_store(rh, "ttl", 3, val, 0);
+            hv_stores(rh, "ttl", val);
 
             RETVAL = newRV_inc((SV *)rh);
         }
@@ -143,6 +127,10 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
 
     OUTPUT:
         RETVAL
+
+BOOT:
+    HV *stash = gv_stashpvn("DNS::Unbound", 12, FALSE);
+    newCONSTSUB(stash, "unbound_version", newSVpv( ub_version(), 0 ));
 
 void
 _destroy_context( struct ub_ctx *ctx )

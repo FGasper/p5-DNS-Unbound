@@ -141,6 +141,12 @@ sub resolve {
     return $result;
 }
 
+=head2 I<OBJ>->set_option( $NAME => $VALUE )
+
+Sets a configuration option. Returns I<OBJ>.
+
+=cut
+
 sub set_option {
     my $err = _ub_ctx_set_option( $_[0][0], "$_[1]:", $_[2] );
 
@@ -152,6 +158,12 @@ sub set_option {
     return $_[0];
 }
 
+=head2 $value = I<OBJ>->get_option( $NAME )
+
+Gets a configuration option’s value.
+
+=cut
+
 sub get_option {
     my $got = _ub_ctx_get_option( $_[0][0], $_[1] );
 
@@ -162,6 +174,12 @@ sub get_option {
 
     return $$got;
 }
+
+=head2 I<CLASS>->unbound_version()
+
+Gives the libunbound version string.
+
+=cut
 
 #----------------------------------------------------------------------
 
