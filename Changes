@@ -1,4 +1,7 @@
 Revision history for Perl module DNS::Unbound
 
+0.02 - ?
+- Resolve configure_requires issue.
+
 0.01 - Thu, 21 March 2019
 - Initial release
