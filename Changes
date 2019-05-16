@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.03 - Thu, 16 May 2019
+- Fix bugtracker in Makefile.PL.
+
 0.02 - Mon, 25 March 2019
 - Resolve configure_requires issue.
 - Fix dangling “1;” in POD.

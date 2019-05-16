@@ -40,7 +40,9 @@ WriteMakefile(
     META_MERGE => {
         'meta-spec' => { version => 2 },
         resources   => {
-            bugtracker => 'https://github.com/FGasper/p5-DNS-Unbound/issues',
+            bugtracker => {
+                web => 'https://github.com/FGasper/p5-DNS-Unbound/issues',
+            },
             repository => {
                 type => 'git',
                 url  => 'https://github.com/FGasper/p5-DNS-Unbound.git',
