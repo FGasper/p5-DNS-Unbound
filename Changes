@@ -1,5 +1,9 @@
 Revision history for Perl module DNS::Unbound
 
+0.04
+- Prevent excess destruction of context struct.
+- Store ints as IV rather than NV.
+
 0.03 - Thu, 16 May 2019
 - Fix bugtracker in Makefile.PL.
 
