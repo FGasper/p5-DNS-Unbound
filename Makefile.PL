@@ -14,6 +14,10 @@ if ($?) {
     warn "You either don’t have libunbound installed, or your installed version didn’t include a pkg-config file. Will attempt build with default configuration.\n";
     $ldflags ||= '-lunbound';
 }
+else {
+    warn "CFLAGS from pkg-config: [$cflags]\n";
+    warn "LDFLAGS from pkg-config: [$ldflags]\n";
+}
 
 WriteMakefile(
     NAME           => 'DNS::Unbound',
