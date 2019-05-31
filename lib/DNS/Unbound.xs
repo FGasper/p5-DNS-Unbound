@@ -228,7 +228,7 @@ _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *r
 //sv_dump(rej_cv);
 
         //struct resrej* promise = malloc( sizeof(struct resrej) );
-        struct resrej* promise;
+        struct resrej* promise = NULL;
         Newx( promise, 1, struct resrej );
 
         //malloc(

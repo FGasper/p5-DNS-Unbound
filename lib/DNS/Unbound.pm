@@ -336,13 +336,9 @@ sub DESTROY {
 
         if ($pieces_ar) {
             my ($ctx) = @$pieces_ar;
-print "deleting: [$ctx, $id]\n";
 
-            DNS::Unbound::_ub_cancel( $ctx, $id );
+            DNS::Unbound::_ub_cancel( $ctx, $id ) if $ctx;
         }
-else {
-print "------- cancel() noop ($self)\n";
-}
 
         return;
     }
