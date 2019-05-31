@@ -141,6 +141,44 @@ sub resolve {
     return $result;
 }
 
+#----------------------------------------------------------------------
+
+sub resolve_async {
+    my $type = $_[2] || die 'Need type!';
+    $type = RR()->{$type} || $type;
+
+    my $async_ar;
+
+    # Prevent memory leaks.
+    my $ctx = $_[0][0];
+    my $name = $_[1];
+    my $class = $_[3] || 1;
+
+    my ($res, $rej);
+
+    my $query = DNS::Unbound::AsyncQuery->new( sub {
+        ($res, $rej) = @_;
+
+        $async_ar = _resolve_async(
+            $ctx, $name, $type, $class,
+            $res, $rej,
+        );
+    } );
+use Data::Dumper;
+print STDERR Dumper( query => $async_ar );
+
+    if (my $err = $async_ar->[0]) {
+        die DNS::Unbound::X->create('ResolveError', number => $err, string => _ub_strerror($err));
+    }
+
+    $query->_set_ctx_and_async_id( $ctx, $async_ar->[1], $res, $rej);
+
+    return $query;
+    #return DNS::Unbound::AsyncQuery->new( $_[0], $async_ar->[1] );
+}
+
+#----------------------------------------------------------------------
+
 =head2 I<OBJ>->set_option( $NAME => $VALUE )
 
 Sets a configuration option. Returns I<OBJ>.
@@ -174,6 +212,26 @@ sub get_option {
 
     return $$got;
 }
+
+#----------------------------------------------------------------------
+
+sub poll {
+    return _ub_poll( $_[0][0] );
+}
+
+sub wait {
+    return _ub_wait( $_[0][0] );
+}
+
+sub fd {
+    return _ub_fd( $_[0][0] );
+}
+
+sub process {
+    return _ub_process( $_[0][0] );
+}
+
+#----------------------------------------------------------------------
 
 =head2 I<CLASS>->unbound_version()
 
@@ -226,6 +284,50 @@ sub DESTROY {
     };
 }
 
+#----------------------------------------------------------------------
+{
+    package DNS::Unbound::AsyncQuery;
+
+    use parent qw( Promise::ES6 );
+
+    my %OBJ_ASYNC_ID;
+
+    sub _set_ctx_and_async_id {
+        my ($self, $ctx, $async_id, @resrej) = @_;
+
+        my $key = "$self";
+        $OBJ_ASYNC_ID{$key} = [ $ctx, $async_id, @resrej ];
+
+        $self->finally( sub {
+print STDERR "FINALLY\n";
+            delete $OBJ_ASYNC_ID{$key};
+        } );
+
+        return;
+    }
+
+    sub cancel {
+        my ($self) = @_;
+
+        my $ctx_id = delete $OBJ_ASYNC_ID{$self};
+
+        if ($ctx_id) {
+            my ($ctx, $id) = @$ctx_id;
+
+            DNS::Unbound::_ub_cancel( $ctx, $id );
+        }
+
+        return;
+    }
+
+    sub DESTROY {
+        my ($self) = @_;
+
+        $self->cancel();
+
+        return;
+    }
+}
 #----------------------------------------------------------------------
 
 1;

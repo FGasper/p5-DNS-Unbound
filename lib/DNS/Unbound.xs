@@ -4,6 +4,124 @@
 
 #include <unbound.h>    /* unbound API */
 
+/*
+       int ub_resolve_async(struct ub_ctx* ctx, char* name,
+                        int rrtype, int rrclass, void* mydata,
+                        ub_callback_type callback, int* async_id);
+
+              void my_callback_function(void* my_arg, int err,
+                                struct ub_result* result);
+*/
+
+struct async_result {
+    int error;
+    struct ub_result* result;
+};
+
+struct resrej {
+    CV* res;
+    CV* rej;
+};
+
+SV * _ub_result_to_svhv (struct ub_result* result) {
+    SV *val;
+
+    AV *data = newAV();
+    unsigned int i = 0;
+
+    if (result->data != NULL) {
+        while (result->data[i] != NULL) {
+            val = newSVpvn(result->data[i], result->len[i]);
+            av_push(data, val);
+            i++;
+        }
+    }
+
+    HV * rh = newHV();
+
+    val = newSVpv(result->qname, 0);
+    hv_stores(rh, "qname", val);
+
+    val = newSViv(result->qtype);
+    hv_stores(rh, "qtype", val);
+
+    val = newSViv(result->qclass);
+    hv_stores(rh, "qclass", val);
+
+    hv_stores(rh, "data", newRV_inc((SV *)data));
+
+    val = newSVpv(result->canonname, 0);
+    hv_stores(rh, "canonname", val);
+
+    val = newSViv(result->rcode);
+    hv_stores(rh, "rcode", val);
+
+    val = newSViv(result->havedata);
+    hv_stores(rh, "havedata", val);
+
+    val = newSViv(result->nxdomain);
+    hv_stores(rh, "nxdomain", val);
+
+    val = newSViv(result->secure);
+    hv_stores(rh, "secure", val);
+
+    val = newSViv(result->bogus);
+    hv_stores(rh, "bogus", val);
+
+    val = newSVpv(result->why_bogus, 0);
+    hv_stores(rh, "why_bogus", val);
+
+    val = newSViv(result->ttl);
+    hv_stores(rh, "ttl", val);
+
+    ub_resolve_free(result);
+
+    return newRV_inc((SV *)rh);
+}
+
+void _call_with_argument( CV* cb, SV* arg ) {
+    // --- Almost all copy-paste from “perlcall” … blegh!
+    dSP;
+
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+
+    PUSHs( sv_2mortal(arg) );
+    PUTBACK;
+
+    call_sv(cb, G_SCALAR);
+
+    FREETMPS;
+    LEAVE;
+}
+
+void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
+    struct resrej* promise = (struct resrej *) mydata;
+
+fprintf(stderr, "callback\n");
+
+    if (err) {
+fprintf(stderr, "failure\n");
+        //_call_with_argument( promise->rej, newSViv(err) );
+    }
+    else {
+        SV * svres = _ub_result_to_svhv(result);
+fprintf(stderr, "success\n");
+sv_dump((SV *)promise->res);
+
+        _call_with_argument( promise->res, svres );
+fprintf(stderr, "after success callback\n");
+    }
+
+    //Safefree(promise);
+    free(promise);
+
+    return;
+}
+
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
@@ -58,6 +176,85 @@ _ub_strerror( int err )
     OUTPUT:
         RETVAL
 
+int
+_ub_ctx_async( struct ub_ctx *ctx, int dothread )
+    CODE:
+        RETVAL = ub_ctx_async( ctx, dothread );
+    OUTPUT:
+        RETVAL
+
+int
+_ub_poll( struct ub_ctx *ctx )
+    CODE:
+        RETVAL = ub_poll(ctx);
+    OUTPUT:
+        RETVAL
+
+int
+_ub_wait( struct ub_ctx *ctx )
+    CODE:
+        RETVAL = ub_wait(ctx);
+    OUTPUT:
+        RETVAL
+
+int
+_ub_process( struct ub_ctx *ctx )
+    CODE:
+        RETVAL = ub_process(ctx);
+    OUTPUT:
+        RETVAL
+
+int
+_ub_cancel( struct ub_ctx *ctx, int async_id )
+    CODE:
+        fprintf(stderr, "canceling: %d\n", async_id);
+        RETVAL = ub_cancel(ctx, async_id);
+    OUTPUT:
+        RETVAL
+
+int
+_ub_fd( struct ub_ctx *ctx )
+    CODE:
+        RETVAL = ub_fd(ctx);
+    OUTPUT:
+        RETVAL
+
+SV *
+_resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *res_cv, CV *rej_cv)
+    CODE:
+        int async_id = 0;
+//fprintf(stderr, "name: %s\n", name);
+sv_dump(res_cv);
+//sv_dump(rej_cv);
+
+        //struct resrej* promise = malloc( sizeof(struct resrej) );
+        struct resrej* promise;
+        Newx( promise, 1, struct resrej );
+
+        //malloc(
+
+        promise->res = res_cv;
+        promise->rej = rej_cv;
+
+        int reserr = ub_resolve_async(
+            ctx,
+            name, type, class,
+            //(void *) promise, _async_resolve_callback, NULL
+            (void *) promise, _async_resolve_callback, &async_id
+
+            //(void *) &promise, _async_resolve_callback, &async_id
+            //NULL, _async_resolve_callback, NULL
+            //NULL, _async_resolve_callback, &async_id
+        );
+
+        AV *ret = newAV();
+        av_push( ret, newSViv(reserr) );
+        av_push( ret, newSViv(async_id) );
+
+        RETVAL = newRV_inc((SV *)ret);
+    OUTPUT:
+        RETVAL
+
 SV *
 _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
     CODE:
@@ -70,60 +267,8 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
             RETVAL = newSViv(retval);
         }
         else {
-            SV *val;
-
-            AV *data = newAV();
-            unsigned int i = 0;
-
-            if (result->data != NULL) {
-                while (result->data[i] != NULL) {
-                    val = newSVpvn(result->data[i], result->len[i]);
-                    av_push(data, val);
-                    i++;
-                }
-            }
-
-            HV * rh = newHV();
-
-            val = newSVpv(result->qname, 0);
-            hv_stores(rh, "qname", val);
-
-            val = newSViv(result->qtype);
-            hv_stores(rh, "qtype", val);
-
-            val = newSViv(result->qclass);
-            hv_stores(rh, "qclass", val);
-
-            hv_stores(rh, "data", newRV_inc((SV *)data));
-
-            val = newSVpv(result->canonname, 0);
-            hv_stores(rh, "canonname", val);
-
-            val = newSViv(result->rcode);
-            hv_stores(rh, "rcode", val);
-
-            val = newSViv(result->havedata);
-            hv_stores(rh, "havedata", val);
-
-            val = newSViv(result->nxdomain);
-            hv_stores(rh, "nxdomain", val);
-
-            val = newSViv(result->secure);
-            hv_stores(rh, "secure", val);
-
-            val = newSViv(result->bogus);
-            hv_stores(rh, "bogus", val);
-
-            val = newSVpv(result->why_bogus, 0);
-            hv_stores(rh, "why_bogus", val);
-
-            val = newSViv(result->ttl);
-            hv_stores(rh, "ttl", val);
-
-            RETVAL = newRV_inc((SV *)rh);
+            RETVAL = _ub_result_to_svhv(result);
         }
-
-        ub_resolve_free(result);
 
     OUTPUT:
         RETVAL
