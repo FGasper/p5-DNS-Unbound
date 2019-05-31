@@ -165,7 +165,7 @@ sub resolve_async {
         );
     } );
 use Data::Dumper;
-print STDERR Dumper( query => $async_ar );
+print STDERR Dumper( query => $async_ar, $ctx );
 
     if (my $err = $async_ar->[0]) {
         die DNS::Unbound::X->create('ResolveError', number => $err, string => _ub_strerror($err));
@@ -292,14 +292,35 @@ sub DESTROY {
 
     my %OBJ_ASYNC_ID;
 
+    my %ASYNC_ID_PIECES;
+
+    sub new {
+        my ($class) = shift;
+
+        print "XXXXXXX CREATING\n";
+        my $self = $class->SUPER::new(@_);
+        print "XXXXXXX CREATED: [$self]\n";
+        return $self;
+    }
+
+    sub then {
+        my $self = shift;
+
+        my $new = $self->SUPER::then(@_);
+
+        $OBJ_ASYNC_ID{$new} = $OBJ_ASYNC_ID{$self};
+
+        return $new;
+    }
+
     sub _set_ctx_and_async_id {
         my ($self, $ctx, $async_id, @resrej) = @_;
 
         my $key = "$self";
-        $OBJ_ASYNC_ID{$key} = [ $ctx, $async_id, @resrej ];
+        $OBJ_ASYNC_ID{$key} = $async_id;
+        $ASYNC_ID_PIECES{$async_id} = [ $ctx, @resrej ];
 
-        $self->finally( sub {
-print STDERR "FINALLY\n";
+        my $alt = $self->finally( sub {
             delete $OBJ_ASYNC_ID{$key};
         } );
 
@@ -309,13 +330,19 @@ print STDERR "FINALLY\n";
     sub cancel {
         my ($self) = @_;
 
-        my $ctx_id = delete $OBJ_ASYNC_ID{$self};
+        my $id = delete $OBJ_ASYNC_ID{$self};
 
-        if ($ctx_id) {
-            my ($ctx, $id) = @$ctx_id;
+        my $pieces_ar = $id && delete $ASYNC_ID_PIECES{$id};
+
+        if ($pieces_ar) {
+            my ($ctx) = @$pieces_ar;
+print "deleting: [$ctx, $id]\n";
 
             DNS::Unbound::_ub_cancel( $ctx, $id );
         }
+else {
+print "------- cancel() noop ($self)\n";
+}
 
         return;
     }

@@ -116,8 +116,8 @@ sv_dump((SV *)promise->res);
 fprintf(stderr, "after success callback\n");
     }
 
-    //Safefree(promise);
-    free(promise);
+    Safefree(promise);
+    //free(promise);
 
     return;
 }
@@ -224,7 +224,7 @@ _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *r
     CODE:
         int async_id = 0;
 //fprintf(stderr, "name: %s\n", name);
-sv_dump(res_cv);
+//sv_dump(res_cv);
 //sv_dump(rej_cv);
 
         //struct resrej* promise = malloc( sizeof(struct resrej) );
