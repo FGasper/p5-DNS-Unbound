@@ -101,19 +101,19 @@ void _call_with_argument( CV* cb, SV* arg ) {
 void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     struct resrej* promise = (struct resrej *) mydata;
 
-fprintf(stderr, "callback\n");
+//fprintf(stderr, "callback\n");
 
     if (err) {
-fprintf(stderr, "failure\n");
-        //_call_with_argument( promise->rej, newSViv(err) );
+//fprintf(stderr, "failure\n");
+        _call_with_argument( promise->rej, newSViv(err) );
     }
     else {
         SV * svres = _ub_result_to_svhv(result);
-fprintf(stderr, "success\n");
-sv_dump((SV *)promise->res);
+//fprintf(stderr, "success\n");
+//sv_dump((SV *)promise->res);
 
         _call_with_argument( promise->res, svres );
-fprintf(stderr, "after success callback\n");
+//fprintf(stderr, "after success callback\n");
     }
 
     Safefree(promise);
@@ -207,7 +207,7 @@ _ub_process( struct ub_ctx *ctx )
 int
 _ub_cancel( struct ub_ctx *ctx, int async_id )
     CODE:
-        fprintf(stderr, "canceling: %d\n", async_id);
+        fprintf(stderr, "xxxxxxxxxxxxxxxxx canceling in XS: %d\n", async_id);
         RETVAL = ub_cancel(ctx, async_id);
     OUTPUT:
         RETVAL

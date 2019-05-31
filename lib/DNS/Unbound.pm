@@ -279,9 +279,11 @@ sub decode_character_strings {
 
 sub DESTROY {
     $_[0][1] ||= do {
+print STDERR "@@@@@ destroying context\n";
         _destroy_context( $_[0][0] );
         1;
     };
+print STDERR "@@@@@ context is destroyed\n";
 }
 
 #----------------------------------------------------------------------
@@ -290,15 +292,14 @@ sub DESTROY {
 
     use parent qw( Promise::ES6 );
 
-    my %OBJ_ASYNC_ID;
-
-    my %ASYNC_ID_PIECES;
-
     sub new {
         my ($class) = shift;
 
         print "XXXXXXX CREATING\n";
         my $self = $class->SUPER::new(@_);
+
+        $self->finally( sub { $self->{'_fulfilled'} = 1; } );
+
         print "XXXXXXX CREATED: [$self]\n";
         return $self;
     }
@@ -307,38 +308,23 @@ sub DESTROY {
         my $self = shift;
 
         my $new = $self->SUPER::then(@_);
+print ",,,,,,, copying unbound from $self to $new\n";
 
-        $OBJ_ASYNC_ID{$new} = $OBJ_ASYNC_ID{$self};
+        $new->{'_unbound'} = $self->{'_unbound'};
 
         return $new;
     }
 
     sub _set_ctx_and_async_id {
-        my ($self, $ctx, $async_id, @resrej) = @_;
+        my ($self, $ctx, $async_id, $res, $rej) = @_;
 
-        my $key = "$self";
-        $OBJ_ASYNC_ID{$key} = $async_id;
-        $ASYNC_ID_PIECES{$async_id} = [ $ctx, @resrej ];
-
-        my $alt = $self->finally( sub {
-            delete $OBJ_ASYNC_ID{$key};
-        } );
-
-        return;
-    }
-
-    sub cancel {
-        my ($self) = @_;
-
-        my $id = delete $OBJ_ASYNC_ID{$self};
-
-        my $pieces_ar = $id && delete $ASYNC_ID_PIECES{$id};
-
-        if ($pieces_ar) {
-            my ($ctx) = @$pieces_ar;
-
-            DNS::Unbound::_ub_cancel( $ctx, $id ) if $ctx;
-        }
+        $self->{'_unbound'} = {
+            id => $async_id,
+            ctx => $ctx,
+            res => $res,
+            rej => $rej,
+        };
+print "---------- $self: set unbound\n";
 
         return;
     }
@@ -346,7 +332,31 @@ sub DESTROY {
     sub DESTROY {
         my ($self) = @_;
 
-        $self->cancel();
+        if ($self->{'_fulfilled'}) {
+            print STDERR "```````````` $self: already fulfilled on DESTROY\n";
+        }
+        else {
+            print STDERR "```````````` $self: NOT fulfilled on DESTROY\n";
+
+            if ( my $unbound = delete $self->{'_unbound'} ) {
+                print STDERR "/////// $self: has unbound on DESTROY\n";
+
+                $unbound->{'canceled'} ||= do {
+                    if (my $ctx = $unbound->{'ctx'}) {
+                        print STDERR "................ canceling ($$ctx, $unbound->{'id'})\n";
+                        DNS::Unbound::_ub_cancel( $ctx, $unbound->{'id'} );
+                    }
+else {
+print STDERR "......... context is already canceled!\n";
+}
+
+                    1;
+                };
+            }
+            else {
+                print STDERR "/////// $self: NO unbound on DESTROY\n";
+            }
+        }
 
         return;
     }
