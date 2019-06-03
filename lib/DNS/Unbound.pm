@@ -143,6 +143,19 @@ sub resolve {
 
 #----------------------------------------------------------------------
 
+=head2 $query = I<OBJ>->resolve_async( $NAME, $TYPE [, $CLASS ] );
+
+Like C<resolve()> but starts an asynchronous query rather than a
+synchronous one.
+
+This returns an instance of C<DNS::Unbound::AsyncQuery>, which
+subclasses L<Promise::ES6>. You may C<cancel()> this promise object.
+The promise resolves with either the same hash reference as
+C<resolve()> returns, or it rejects with a L<DNS::Unbound::X> instance
+that describes the failure.
+
+=cut
+
 sub resolve_async {
     my $type = $_[2] || die 'Need type!';
     $type = RR()->{$type} || $type;
@@ -158,20 +171,38 @@ sub resolve_async {
 
     my $query = DNS::Unbound::AsyncQuery->new( sub {
         ($res, $rej) = @_;
-
-        $async_ar = _resolve_async(
-            $ctx, $name, $type, $class,
-            $res, $rej,
-        );
     } );
+
+    # It’s important that this be the _same_ scalar as what XS gets.
+    $query->{'_dns_value'} = undef;
+
+    $query->{'_dns_res'} = $res;
+    $query->{'_dns_rej'} = $rej;
+
+    $async_ar = _resolve_async2(
+        $ctx, $name, $type, $class,
+        $query->{'_dns_value'},
+    );
+
 use Data::Dumper;
-print STDERR Dumper( query => $async_ar, $ctx );
+#print STDERR Dumper( query => $async_ar, $ctx );
 
     if (my $err = $async_ar->[0]) {
         die DNS::Unbound::X->create('ResolveError', number => $err, string => _ub_strerror($err));
     }
 
-    $query->_set_ctx_and_async_id( $ctx, $async_ar->[1], $res, $rej);
+    my $query_id = $async_ar->[1];
+
+    $query->{'ctx'} = $ctx;
+    $query->{'id'} = $query_id;
+
+    #$state{'id'} = $query_id;
+
+    #$query->{'_unbound'} = $query;
+
+    #$query->_set_ctx_and_async_id( $ctx, $query_id, $res, $rej);
+
+    $_[0][2]{ $query_id } = $query;
 
     return $query;
     #return DNS::Unbound::AsyncQuery->new( $_[0], $async_ar->[1] );
@@ -219,16 +250,54 @@ sub poll {
     return _ub_poll( $_[0][0] );
 }
 
-sub wait {
-    return _ub_wait( $_[0][0] );
-}
-
 sub fd {
     return _ub_fd( $_[0][0] );
 }
 
+sub wait {
+    my $ret = _ub_wait( $_[0][0] );
+
+    $_[0]->_check_promises();
+
+    return $ret;
+}
+
 sub process {
-    return _ub_process( $_[0][0] );
+    my $ret = _ub_process( $_[0][0] );
+
+    $_[0]->_check_promises();
+
+    return $ret;
+}
+
+sub _check_promises {
+    my ($self) = @_;
+
+    my $asyncs_hr = $self->[2];
+
+    for (values %$asyncs_hr) {
+        if (defined $_->{'_dns_value'}) {
+            delete $asyncs_hr->{ $_->{'id'} };
+
+            my $key;
+
+            if ( ref $_->{'_dns_value'} ) {
+                $key = '_dns_res';
+            }
+            else {
+                $key = '_dns_rej';
+
+                $_->{'_dns_value'} = DNS::Unbound::X->create('ResolveError', number => $_->{'_dns_value'}, string => _ub_strerror($_->{'_dns_value'}));
+            }
+
+            $_->{'_finished'} ||= do {
+                eval { $_->{$key}->($_->{'_dns_value'}) };
+                1;
+            };
+        }
+    }
+
+    return;
 }
 
 #----------------------------------------------------------------------
@@ -279,6 +348,11 @@ sub decode_character_strings {
 
 sub DESTROY {
     $_[0][1] ||= do {
+        if (my $queries_hr = $_[0][2]) {
+            $_->cancel() for values %$queries_hr;
+            %$queries_hr = ();
+        }
+
 print STDERR "@@@@@ destroying context\n";
         _destroy_context( $_[0][0] );
         1;
@@ -310,26 +384,26 @@ print STDERR "@@@@@ context is destroyed\n";
         my $new = $self->SUPER::then(@_);
 print ",,,,,,, copying unbound from $self to $new\n";
 
-        $new->{'_unbound'} = $self->{'_unbound'};
+        $new->{'_unbound'} = $self->{'_unbound'} || $self;
 
         return $new;
     }
 
-    sub _set_ctx_and_async_id {
-        my ($self, $ctx, $async_id, $res, $rej) = @_;
+#    sub _set_ctx_and_async_id {
+#        my ($self, $ctx, $async_id, $res, $rej) = @_;
+#
+#        $self->{'_unbound'} = {
+#            id => $async_id,
+#            ctx => $ctx,
+#            res => $res,
+#            rej => $rej,
+#        };
+#print "---------- $self: set unbound\n";
+#
+#        return;
+#    }
 
-        $self->{'_unbound'} = {
-            id => $async_id,
-            ctx => $ctx,
-            res => $res,
-            rej => $rej,
-        };
-print "---------- $self: set unbound\n";
-
-        return;
-    }
-
-    sub DESTROY {
+    sub cancel {
         my ($self) = @_;
 
         if ($self->{'_fulfilled'}) {

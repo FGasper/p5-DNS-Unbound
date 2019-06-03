@@ -76,7 +76,7 @@ SV * _ub_result_to_svhv (struct ub_result* result) {
 
     ub_resolve_free(result);
 
-    return newRV_inc((SV *)rh);
+    return (SV *)rh;
 }
 
 void _call_with_argument( CV* cb, SV* arg ) {
@@ -98,29 +98,80 @@ void _call_with_argument( CV* cb, SV* arg ) {
     LEAVE;
 }
 
-void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
-    struct resrej* promise = (struct resrej *) mydata;
+void _async_resolve_callback2(void* mydata, int err, struct ub_result* result) {
+    //struct resrej* promise = (struct resrej *) mydata;
+fprintf( stderr, "obj pointer in callback: %llu\n", mydata);
+//    char *readyptr = (char *) mydata;
+//fprintf(stderr, "status now: [%s]\n", readyptr);
 
 //fprintf(stderr, "callback\n");
 
+    SV *result_sv = (SV *) mydata;
+
     if (err) {
-//fprintf(stderr, "failure\n");
-        _call_with_argument( promise->rej, newSViv(err) );
+fprintf(stderr, "failure\n");
+        //_call_with_argument( promise->rej, newSViv(err) );
+//        readyptr[0] = '2';
     }
     else {
         SV * svres = _ub_result_to_svhv(result);
-//fprintf(stderr, "success\n");
+
+        SvUPGRADE( result_sv, SVt_RV );
+        SvRV_set( result_sv, svres );
+        SvROK_on( result_sv );
+
+fprintf(stderr, "success\n");
+//        readyptr[0] = '1';
 //sv_dump((SV *)promise->res);
 
-        _call_with_argument( promise->res, svres );
+        //_call_with_argument( promise->res, svres );
 //fprintf(stderr, "after success callback\n");
     }
 
-    Safefree(promise);
+    //Safefree(promise);
     //free(promise);
 
     return;
 }
+
+/*
+void _async_resolve_callback2old(void* mydata, int err, struct ub_result* result) {
+fprintf( stderr, "obj pointer in callback: %llu\n", mydata);
+
+fprintf( stderr, ">>>>>>> callback2\n" );
+    //HV* obj = (HV *) mydata;
+    struct resrej* promise = (struct resrej *) mydata;
+
+
+//fprintf(stderr, "callback\n");
+
+    if (err) {
+fprintf( stderr, ">>>>>>> reject\n" );
+//sv_dump( hv_fetchs(obj, "rej", 0) );
+        //CV *cr = (CV *) hv_fetchs(obj, "rej", 0);
+        //if (!cr) croak("No “rej”!");
+
+//fprintf(stderr, "failure\n");
+        //_call_with_argument( cr, newSViv(err) );
+    }
+    else {
+fprintf( stderr, ">>>>>>> resolve\n" );
+//sv_dump( hv_fetchs(obj, "res", 0) );
+        //CV *cr = (CV *) hv_fetchs(obj, "res", 0);
+        CV *cr = promise->res;
+        if (!cr) croak("No “res”!");
+
+        SV * svresult = _ub_result_to_svhv(result);
+//fprintf(stderr, "success\n");
+//sv_dump((SV *)promise->res);
+
+        _call_with_argument( cr, svresult );
+//fprintf(stderr, "after success callback\n");
+    }
+
+    return;
+}
+*/
 
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
@@ -220,6 +271,40 @@ _ub_fd( struct ub_ctx *ctx )
         RETVAL
 
 SV *
+_resolve_async2( struct ub_ctx *ctx, const char *name, int type, int class, SV *result )
+    CODE:
+        int async_id = 0;
+
+        //printf("obj in XS\n");
+        //sv_dump(obj);
+
+        //fprintf(stderr, "obj pointer in resolve: %llu\n", (void *) readyptr);
+
+        //fprintf(stderr, "status now: [%s]\n", readyptr);
+
+        //HV *state = (HV *) SvRV( (SV *) obj );
+        //void *state = SvPV_nolen( (SV *) SvRV( obj ) );
+
+        int reserr = ub_resolve_async(
+            ctx,
+            name, type, class,
+            //(void *) promise, _async_resolve_callback, NULL
+            (void *) result, _async_resolve_callback2, &async_id
+
+            //(void *) &promise, _async_resolve_callback, &async_id
+            //NULL, _async_resolve_callback, NULL
+            //NULL, _async_resolve_callback, &async_id
+        );
+
+        AV *ret = newAV();
+        av_push( ret, newSViv(reserr) );
+        av_push( ret, newSViv(async_id) );
+
+        RETVAL = newRV_inc((SV *)ret);
+    OUTPUT:
+        RETVAL
+
+SV *
 _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *res_cv, CV *rej_cv)
     CODE:
         int async_id = 0;
@@ -236,11 +321,12 @@ _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *r
         promise->res = res_cv;
         promise->rej = rej_cv;
 
+        /*
         int reserr = ub_resolve_async(
             ctx,
             name, type, class,
             //(void *) promise, _async_resolve_callback, NULL
-            (void *) promise, _async_resolve_callback, &async_id
+            //(void *) promise, _async_resolve_callback, &async_id
 
             //(void *) &promise, _async_resolve_callback, &async_id
             //NULL, _async_resolve_callback, NULL
@@ -252,6 +338,7 @@ _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, CV *r
         av_push( ret, newSViv(async_id) );
 
         RETVAL = newRV_inc((SV *)ret);
+        */
     OUTPUT:
         RETVAL
 

@@ -9,7 +9,8 @@ use_ok('DNS::Unbound');
 
 my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
 
-my $name = 'felipegasper.com';    # 'cannot.exist.invalid'
+my $name = 'felipegasper.com';
+$name = 'cannot.exist.invalid';
 
 use Carp::Always;
 eval {
@@ -17,26 +18,32 @@ eval {
         sub { diag explain [ passed => @_ ] },
         sub { diag explain [ failed => @_ ] },
     );
+#use Devel::Peek;
+#Dump($query);
 print "after resolve_async: [$query]\n";
 
-use Devel::Peek;
-Dump($query);
-    undef $query;
+#use Devel::Peek;
+#Dump($query);
+    #$query->cancel();
 
     print ">>>>>>>>>>>>>>>>>> " . $dns->unbound_version() . $/;
 #diag "------- after cancel";
 
-#    my $fd = $dns->fd();
-#    diag "FD: $fd";
-#
-#    vec( my $rin, $fd, 1 ) = 1;
-#    select( my $rout = $rin, undef, undef, undef );
-#
-#    diag "Ready vvvvvvvvvvvvv";
-#    $dns->process();
+    my $fd = $dns->fd();
+    diag "FD: $fd";
+
+    vec( my $rin, $fd, 1 ) = 1;
+    select( my $rout = $rin, undef, undef, undef );
+
+    diag "Ready vvvvvvvvvvvvv";
+    $dns->process();
 
 #    $dns->wait();
 };
 warn if $@;
+
+    use Data::Dumper;
+    #print STDERR Dumper($dns->[2]);
+#Dump($dns->[2]);
 
 done_testing();
