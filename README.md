@@ -37,6 +37,17 @@ excluding `len`, `answer_packet`, and `answer_len`.
 neither does DNS::Unbound.)
 To decode some common record types, see ["CONVENIENCE FUNCTIONS"](#convenience-functions) below.
 
+## $query = _OBJ_->resolve\_async( $NAME, $TYPE \[, $CLASS \] );
+
+Like `resolve()` but starts an asynchronous query rather than a
+synchronous one.
+
+This returns an instance of `DNS::Unbound::AsyncQuery`, which
+subclasses [Promise::ES6](https://metacpan.org/pod/Promise::ES6). You may `cancel()` this promise object.
+The promise resolves with either the same hash reference as
+`resolve()` returns, or it rejects with a [DNS::Unbound::X](https://metacpan.org/pod/DNS::Unbound::X) instance
+that describes the failure.
+
 ## _OBJ_->set\_option( $NAME => $VALUE )
 
 Sets a configuration option. Returns _OBJ_.

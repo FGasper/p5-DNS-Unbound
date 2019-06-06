@@ -7,10 +7,10 @@ use Test::More;
 
 use_ok('DNS::Unbound');
 
-my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
+my $dns = DNS::Unbound->new()->set_option( verbosity => 2 )->enable_threads();
 
-my $name = 'felipegasper.com';
-$name = 'cannot.exist.invalid';
+my $name = 'usa.gov';
+#$name = 'cannot.exist.invalid';
 
 use Carp::Always;
 eval {

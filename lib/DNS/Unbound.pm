@@ -7,7 +7,7 @@ use warnings;
 
 =head1 NAME
 
-DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver
+DNS::Unbound - libunbound in Perl
 
 =head1 SYNOPSIS
 
@@ -21,6 +21,13 @@ DNS::Unbound - A Perl interface to NLNetLabs’s L<Unbound|https://nlnetlabs.nl/
 
     # See below about encodings in “data”.
     my @ns = map { $dns->decode_name($_) } @{ $res_hr->{'data'} };
+
+=cut
+
+=head1 DESCRIPTION
+
+This library is a Perl interface to NLNetLabs’s widely-used
+L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver.
 
 =cut
 
@@ -107,7 +114,10 @@ Instantiates this class.
 =cut
 
 sub new {
-    bless [ _create_context() ], shift;
+    return bless {
+        _ub => _create_context(),
+        _pid => $$,
+    }, shift();
 }
 
 =head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
@@ -126,13 +136,17 @@ B<NOTE:> Members of C<data> are in their DNS-native RDATA encodings.
 neither does DNS::Unbound.)
 To decode some common record types, see L</CONVENIENCE FUNCTIONS> below.
 
+Also B<NOTE:> libunbound’s facilities for timing out a synchronous query
+are rather lackluster. If that’s relevant for you, you probably want
+to use C<resolve_async()> instead.
+
 =cut
 
 sub resolve {
     my $type = $_[2] || die 'Need type!';
     $type = RR()->{$type} || $type;
 
-    my $result = _resolve( $_[0][0], $_[1], $type, $_[3] || () );
+    my $result = _resolve( $_[0]->{'_ub'}, $_[1], $type, $_[3] || () );
 
     if (!ref($result)) {
         die DNS::Unbound::X->create('ResolveError', number => $result, string => _ub_strerror($result));
@@ -163,7 +177,7 @@ sub resolve_async {
     my $async_ar;
 
     # Prevent memory leaks.
-    my $ctx = $_[0][0];
+    my $ctx = $_[0]->{'_ub'};
     my $name = $_[1];
     my $class = $_[3] || 1;
 
@@ -202,11 +216,55 @@ use Data::Dumper;
 
     #$query->_set_ctx_and_async_id( $ctx, $query_id, $res, $rej);
 
-    $_[0][2]{ $query_id } = $query;
+    $_[0]->{'_queries_hr'}{ $query_id } = $query;
 
     return $query;
     #return DNS::Unbound::AsyncQuery->new( $_[0], $async_ar->[1] );
 }
+
+#----------------------------------------------------------------------
+
+=head2 I<OBJ>->enable_threads()
+
+Sets I<OBJ>’s asynchronous queries to use threads rather than forking.
+Off by default. Throws an exception if called after an asynchronous query has
+already been sent.
+
+Returns I<OBJ>.
+
+B<NOTE:> Perl’s relationship with threads is … complicated.
+This option is not well-tested. If in doubt, just skip it.
+
+=cut
+
+sub enable_threads {
+    my ($self) = @_;
+
+    _ub_ctx_async( $self->{'_ub'}, 1 );
+
+    return $self;
+}
+
+#=head2 I<OBJ>->disable_threads()
+#
+#Sets asynchronous queries to fork rather than using threads. On by default.
+#Throws an exception if called after an asynchronous query has
+#already been sent.
+#
+#Returns I<OBJ>.
+#
+#You probably don’t need to call this unless for some reason you want to
+#disable threads after having enabled them without actually starting a query.
+#
+#=cut
+#
+#sub disable_threads {
+#    my ($self) = @_;
+#
+#    _ub_ctx_async( $self->[0], 0 );
+#
+#    return $self;
+#}
 
 #----------------------------------------------------------------------
 
@@ -217,7 +275,7 @@ Sets a configuration option. Returns I<OBJ>.
 =cut
 
 sub set_option {
-    my $err = _ub_ctx_set_option( $_[0][0], "$_[1]:", $_[2] );
+    my $err = _ub_ctx_set_option( $_[0]->{'_ub'}, "$_[1]:", $_[2] );
 
     if ($err) {
         my $str = _ctx_err()->{$err} || "Unknown error code: $err";
@@ -234,7 +292,7 @@ Gets a configuration option’s value.
 =cut
 
 sub get_option {
-    my $got = _ub_ctx_get_option( $_[0][0], $_[1] );
+    my $got = _ub_ctx_get_option( $_[0]->{'_ub'}, $_[1] );
 
     if (!ref($got)) {
         my $str = _ctx_err()->{$got} || "Unknown error code: $got";
@@ -246,67 +304,97 @@ sub get_option {
 
 #----------------------------------------------------------------------
 
+=head2 $str = I<CLASS>->unbound_version()
+
+Gives the libunbound version string.
+
+=cut
+
+#----------------------------------------------------------------------
+
+=head1 METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES
+
+The following methods correspond to their equivalents in libunbound:
+
+=head2 I<OBJ>->poll()
+
+Z<>
+
+=cut
+
 sub poll {
-    return _ub_poll( $_[0][0] );
+    return _ub_poll( $_[0]->{'_ub'} );
 }
+
+=head2 I<OBJ>->fd()
+
+Z<>
+
+=cut
 
 sub fd {
-    return _ub_fd( $_[0][0] );
+    return _ub_fd( $_[0]->{'_ub'} );
 }
+
+=head2 I<OBJ>->wait()
+
+Z<>
+
+=cut
 
 sub wait {
-    my $ret = _ub_wait( $_[0][0] );
+    my $ret = _ub_wait( $_[0]->{'_ub'} );
 
     $_[0]->_check_promises();
 
     return $ret;
 }
+
+=head2 I<OBJ>->process()
+
+Z<>
+
+=cut
 
 sub process {
-    my $ret = _ub_process( $_[0][0] );
+    my $ret = _ub_process( $_[0]->{'_ub'} );
 
     $_[0]->_check_promises();
 
     return $ret;
 }
+
+#----------------------------------------------------------------------
 
 sub _check_promises {
     my ($self) = @_;
 
-    my $asyncs_hr = $self->[2];
+    if ( my $asyncs_hr = $self->{'_queries_hr'} ) {
+        for (values %$asyncs_hr) {
+            if (defined $_->{'_dns_value'}) {
+                delete $asyncs_hr->{ $_->{'id'} };
 
-    for (values %$asyncs_hr) {
-        if (defined $_->{'_dns_value'}) {
-            delete $asyncs_hr->{ $_->{'id'} };
+                my $key;
 
-            my $key;
+                if ( ref $_->{'_dns_value'} ) {
+                    $key = '_dns_res';
+                }
+                else {
+                    $key = '_dns_rej';
 
-            if ( ref $_->{'_dns_value'} ) {
-                $key = '_dns_res';
+                    $_->{'_dns_value'} = DNS::Unbound::X->create('ResolveError', number => $_->{'_dns_value'}, string => _ub_strerror($_->{'_dns_value'}));
+                }
+
+                $_->{'_finished'} ||= do {
+                    eval { $_->{$key}->($_->{'_dns_value'}) };
+                    1;
+                };
             }
-            else {
-                $key = '_dns_rej';
-
-                $_->{'_dns_value'} = DNS::Unbound::X->create('ResolveError', number => $_->{'_dns_value'}, string => _ub_strerror($_->{'_dns_value'}));
-            }
-
-            $_->{'_finished'} ||= do {
-                eval { $_->{$key}->($_->{'_dns_value'}) };
-                1;
-            };
         }
     }
 
     return;
 }
-
-#----------------------------------------------------------------------
-
-=head2 I<CLASS>->unbound_version()
-
-Gives the libunbound version string.
-
-=cut
 
 #----------------------------------------------------------------------
 
@@ -347,17 +435,20 @@ sub decode_character_strings {
 #----------------------------------------------------------------------
 
 sub DESTROY {
-    $_[0][1] ||= do {
-        if (my $queries_hr = $_[0][2]) {
-            $_->cancel() for values %$queries_hr;
-            %$queries_hr = ();
+use Data::Dumper;
+print STDERR Dumper( DESTROY => $_[0] );
+    $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
+        if ($$ == $_[0]->{'_pid'}) {
+            if (my $queries_hr = $_[0]->{'_queries_hr'}) {
+                $_->cancel() for values %$queries_hr;
+                %$queries_hr = ();
+            }
         }
 
-print STDERR "@@@@@ destroying context\n";
-        _destroy_context( $_[0][0] );
+        _destroy_context( $_[0]->{'_ub'} );
+
         1;
     };
-print STDERR "@@@@@ context is destroyed\n";
 }
 
 #----------------------------------------------------------------------
@@ -407,13 +498,13 @@ print ",,,,,,, copying unbound from $self to $new\n";
         my ($self) = @_;
 
         if ($self->{'_fulfilled'}) {
-            print STDERR "```````````` $self: already fulfilled on DESTROY\n";
+            print STDERR "```````````` $self: already fulfilled on cancel()\n";
         }
         else {
-            print STDERR "```````````` $self: NOT fulfilled on DESTROY\n";
+            print STDERR "```````````` $self: NOT fulfilled on cancel()\n";
 
             if ( my $unbound = delete $self->{'_unbound'} ) {
-                print STDERR "/////// $self: has unbound on DESTROY\n";
+                print STDERR "/////// $self: has unbound on cancel()\n";
 
                 $unbound->{'canceled'} ||= do {
                     if (my $ctx = $unbound->{'ctx'}) {
@@ -428,7 +519,7 @@ print STDERR "......... context is already canceled!\n";
                 };
             }
             else {
-                print STDERR "/////// $self: NO unbound on DESTROY\n";
+                print STDERR "/////// $self: NO unbound on cancel()\n";
             }
         }
 
