@@ -185,16 +185,17 @@ sub resolve_async {
         ($res, $rej) = @_;
     } );
 
-    # It’s important that this be the _same_ scalar as what XS gets.
-    # libunbound’s async callback will receive a pointer to this SV
-    # and populate it as appropriate.
+    # This hash maintains the query state across all related promise objects.
     my %dns = (
-        value => undef,
         res => $res,
         rej => $rej,
         ctx => $ctx,
+
+        # It’s important that this be the _same_ scalar as what XS gets.
+        # libunbound’s async callback will receive a pointer to this SV
+        # and populate it as appropriate.
+        value => undef,
     );
-    $query->{'_dns'} = \%dns;
 
     my $async_ar = _resolve_async(
         $ctx, $name, $type, $class,
@@ -208,6 +209,8 @@ sub resolve_async {
     my $query_id = $async_ar->[1];
 
     $dns{'id'} = $query_id;
+
+    $query->_set_dns(\%dns);
 
     $_[0]->{'_queries_hr'}{ $query_id } = $query;
 
@@ -363,9 +366,9 @@ sub _check_promises {
 
     if ( my $asyncs_hr = $self->{'_queries_hr'} ) {
         for (values %$asyncs_hr) {
-            if (defined $_->{'_dns'}{'value'}) {
-                my $dns_hr = $_->{'_dns'};
+            my $dns_hr = $_->_get_dns();
 
+            if (defined $dns_hr->{'value'}) {
                 delete $asyncs_hr->{ $dns_hr->{'id'} };
 
                 my $key;
@@ -432,7 +435,7 @@ sub DESTROY {
     $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
         if ($$ == $_[0]->{'_pid'}) {
             if (my $queries_hr = $_[0]->{'_queries_hr'}) {
-                $_->_forget_unbound() for values %$queries_hr;
+                $_->_forget_dns() for values %$queries_hr;
                 %$queries_hr = ();
             }
         }
@@ -448,16 +451,6 @@ sub DESTROY {
     package DNS::Unbound::AsyncQuery;
 
     use parent qw( Promise::ES6 );
-
-    sub new {
-        my ($class) = shift;
-
-        my $self = $class->SUPER::new(@_);
-
-        my $dns_hr = $self->{'_dns'};
-
-        return $self;
-    }
 
     sub then {
         my $self = shift;
@@ -483,7 +476,20 @@ sub DESTROY {
         return;
     }
 
-    sub _forget_unbound {
+    # ----------------------------------------------------------------------
+    # Interfaces for DNS::Unbound to interact with the query’s DNS state:
+
+    sub _set_dns {
+        my ($self, $dns_hr) = @_;
+        $self->{'_dns'} = $dns_hr;
+        return $self;
+    }
+
+    sub _get_dns {
+        return $_[0]->{'_dns'};
+    }
+
+    sub _forget_dns {
         delete $_[0]->{'_dns'};
         return $_[0];
     }
