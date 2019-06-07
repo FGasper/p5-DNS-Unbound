@@ -7,7 +7,7 @@ use Test::More;
 
 use_ok('DNS::Unbound');
 
-my $dns = DNS::Unbound->new()->set_option( verbosity => 2 )->enable_threads();
+my $dns = DNS::Unbound->new()->enable_threads();
 
 my $name = 'usa.gov';
 #$name = 'cannot.exist.invalid';
@@ -18,16 +18,8 @@ eval {
         sub { diag explain [ passed => @_ ] },
         sub { diag explain [ failed => @_ ] },
     );
-#use Devel::Peek;
-#Dump($query);
-print "after resolve_async: [$query]\n";
-
-#use Devel::Peek;
-#Dump($query);
-    #$query->cancel();
 
     print ">>>>>>>>>>>>>>>>>> " . $dns->unbound_version() . $/;
-#diag "------- after cancel";
 
     my $fd = $dns->fd();
     diag "FD: $fd";
@@ -37,13 +29,6 @@ print "after resolve_async: [$query]\n";
 
     diag "Ready vvvvvvvvvvvvv";
     $dns->process();
-
-#    $dns->wait();
 };
-warn if $@;
-
-    use Data::Dumper;
-    #print STDERR Dumper($dns->[2]);
-#Dump($dns->[2]);
 
 done_testing();

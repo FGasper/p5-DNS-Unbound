@@ -174,8 +174,6 @@ sub resolve_async {
     my $type = $_[2] || die 'Need type!';
     $type = RR()->{$type} || $type;
 
-    my $async_ar;
-
     # Prevent memory leaks.
     my $ctx = $_[0]->{'_ub'};
     my $name = $_[1];
@@ -188,18 +186,20 @@ sub resolve_async {
     } );
 
     # It’s important that this be the _same_ scalar as what XS gets.
-    $query->{'_dns_value'} = undef;
-
-    $query->{'_dns_res'} = $res;
-    $query->{'_dns_rej'} = $rej;
-
-    $async_ar = _resolve_async2(
-        $ctx, $name, $type, $class,
-        $query->{'_dns_value'},
+    # libunbound’s async callback will receive a pointer to this SV
+    # and populate it as appropriate.
+    my %dns = (
+        value => undef,
+        res => $res,
+        rej => $rej,
+        ctx => $ctx,
     );
+    $query->{'_dns'} = \%dns;
 
-use Data::Dumper;
-#print STDERR Dumper( query => $async_ar, $ctx );
+    my $async_ar = _resolve_async(
+        $ctx, $name, $type, $class,
+        $dns{'value'},
+    );
 
     if (my $err = $async_ar->[0]) {
         die DNS::Unbound::X->create('ResolveError', number => $err, string => _ub_strerror($err));
@@ -207,19 +207,11 @@ use Data::Dumper;
 
     my $query_id = $async_ar->[1];
 
-    $query->{'ctx'} = $ctx;
-    $query->{'id'} = $query_id;
-
-    #$state{'id'} = $query_id;
-
-    #$query->{'_unbound'} = $query;
-
-    #$query->_set_ctx_and_async_id( $ctx, $query_id, $res, $rej);
+    $dns{'id'} = $query_id;
 
     $_[0]->{'_queries_hr'}{ $query_id } = $query;
 
     return $query;
-    #return DNS::Unbound::AsyncQuery->new( $_[0], $async_ar->[1] );
 }
 
 #----------------------------------------------------------------------
@@ -371,22 +363,24 @@ sub _check_promises {
 
     if ( my $asyncs_hr = $self->{'_queries_hr'} ) {
         for (values %$asyncs_hr) {
-            if (defined $_->{'_dns_value'}) {
-                delete $asyncs_hr->{ $_->{'id'} };
+            if (defined $_->{'_dns'}{'value'}) {
+                my $dns_hr = $_->{'_dns'};
+
+                delete $asyncs_hr->{ $dns_hr->{'id'} };
 
                 my $key;
 
-                if ( ref $_->{'_dns_value'} ) {
-                    $key = '_dns_res';
+                if ( ref $dns_hr->{'value'} ) {
+                    $key = 'res';
                 }
                 else {
-                    $key = '_dns_rej';
+                    $key = 'rej';
 
-                    $_->{'_dns_value'} = DNS::Unbound::X->create('ResolveError', number => $_->{'_dns_value'}, string => _ub_strerror($_->{'_dns_value'}));
+                    $dns_hr->{'value'} = DNS::Unbound::X->create('ResolveError', number => $dns_hr->{'value'}, string => _ub_strerror($dns_hr->{'value'}));
                 }
 
-                $_->{'_finished'} ||= do {
-                    eval { $_->{$key}->($_->{'_dns_value'}) };
+                $dns_hr->{'fulfilled'} ||= do {
+                    eval { $dns_hr->{$key}->($dns_hr->{'value'}) };
                     1;
                 };
             }
@@ -435,17 +429,15 @@ sub decode_character_strings {
 #----------------------------------------------------------------------
 
 sub DESTROY {
-use Data::Dumper;
-print STDERR Dumper( DESTROY => $_[0] );
     $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
         if ($$ == $_[0]->{'_pid'}) {
             if (my $queries_hr = $_[0]->{'_queries_hr'}) {
-                $_->cancel() for values %$queries_hr;
+                $_->_forget_unbound() for values %$queries_hr;
                 %$queries_hr = ();
             }
         }
 
-        _destroy_context( $_[0]->{'_ub'} );
+        _destroy_context( delete $_[0]->{'_ub'} );
 
         1;
     };
@@ -460,12 +452,10 @@ print STDERR Dumper( DESTROY => $_[0] );
     sub new {
         my ($class) = shift;
 
-        print "XXXXXXX CREATING\n";
         my $self = $class->SUPER::new(@_);
 
-        $self->finally( sub { $self->{'_fulfilled'} = 1; } );
+        my $dns_hr = $self->{'_dns'};
 
-        print "XXXXXXX CREATED: [$self]\n";
         return $self;
     }
 
@@ -473,59 +463,32 @@ print STDERR Dumper( DESTROY => $_[0] );
         my $self = shift;
 
         my $new = $self->SUPER::then(@_);
-print ",,,,,,, copying unbound from $self to $new\n";
 
-        $new->{'_unbound'} = $self->{'_unbound'} || $self;
+        $new->{'_dns'} = $self->{'_dns'};
 
         return $new;
     }
 
-#    sub _set_ctx_and_async_id {
-#        my ($self, $ctx, $async_id, $res, $rej) = @_;
-#
-#        $self->{'_unbound'} = {
-#            id => $async_id,
-#            ctx => $ctx,
-#            res => $res,
-#            rej => $rej,
-#        };
-#print "---------- $self: set unbound\n";
-#
-#        return;
-#    }
-
     sub cancel {
         my ($self) = @_;
 
-        if ($self->{'_fulfilled'}) {
-            print STDERR "```````````` $self: already fulfilled on cancel()\n";
-        }
-        else {
-            print STDERR "```````````` $self: NOT fulfilled on cancel()\n";
+        my $dns_hr = $self->{'_dns'};
 
-            if ( my $unbound = delete $self->{'_unbound'} ) {
-                print STDERR "/////// $self: has unbound on cancel()\n";
-
-                $unbound->{'canceled'} ||= do {
-                    if (my $ctx = $unbound->{'ctx'}) {
-                        print STDERR "................ canceling ($$ctx, $unbound->{'id'})\n";
-                        DNS::Unbound::_ub_cancel( $ctx, $unbound->{'id'} );
-                    }
-else {
-print STDERR "......... context is already canceled!\n";
-}
-
-                    1;
-                };
-            }
-            else {
-                print STDERR "/////// $self: NO unbound on cancel()\n";
+        if (!$dns_hr->{'fulfilled'}) {
+            if (my $ctx = delete $dns_hr->{'ctx'}) {
+                DNS::Unbound::_ub_cancel( $ctx, $dns_hr->{'id'} );
             }
         }
 
         return;
     }
+
+    sub _forget_unbound {
+        delete $_[0]->{'_dns'};
+        return $_[0];
+    }
 }
+
 #----------------------------------------------------------------------
 
 1;

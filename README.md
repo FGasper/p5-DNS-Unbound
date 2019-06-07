@@ -1,6 +1,6 @@
 # NAME
 
-DNS::Unbound - A Perl interface to NLNetLabs’s [Unbound](https://nlnetlabs.nl/projects/unbound/) recursive DNS resolver
+DNS::Unbound - libunbound in Perl
 
 # SYNOPSIS
 
@@ -14,6 +14,11 @@ DNS::Unbound - A Perl interface to NLNetLabs’s [Unbound](https://nlnetlabs.nl/
 
     # See below about encodings in “data”.
     my @ns = map { $dns->decode_name($_) } @{ $res_hr->{'data'} };
+
+# DESCRIPTION
+
+This library is a Perl interface to NLNetLabs’s widely-used
+[Unbound](https://nlnetlabs.nl/projects/unbound/) recursive DNS resolver.
 
 # METHODS
 
@@ -37,6 +42,10 @@ excluding `len`, `answer_packet`, and `answer_len`.
 neither does DNS::Unbound.)
 To decode some common record types, see ["CONVENIENCE FUNCTIONS"](#convenience-functions) below.
 
+Also **NOTE:** libunbound’s facilities for timing out a synchronous query
+are rather lackluster. If that’s relevant for you, you probably want
+to use `resolve_async()` instead.
+
 ## $query = _OBJ_->resolve\_async( $NAME, $TYPE \[, $CLASS \] );
 
 Like `resolve()` but starts an asynchronous query rather than a
@@ -48,6 +57,17 @@ The promise resolves with either the same hash reference as
 `resolve()` returns, or it rejects with a [DNS::Unbound::X](https://metacpan.org/pod/DNS::Unbound::X) instance
 that describes the failure.
 
+## _OBJ_->enable\_threads()
+
+Sets _OBJ_’s asynchronous queries to use threads rather than forking.
+Off by default. Throws an exception if called after an asynchronous query has
+already been sent.
+
+Returns _OBJ_.
+
+**NOTE:** Perl’s relationship with threads is … complicated.
+This option is not well-tested. If in doubt, just skip it.
+
 ## _OBJ_->set\_option( $NAME => $VALUE )
 
 Sets a configuration option. Returns _OBJ_.
@@ -56,9 +76,29 @@ Sets a configuration option. Returns _OBJ_.
 
 Gets a configuration option’s value.
 
-## _CLASS_->unbound\_version()
+## $str = _CLASS_->unbound\_version()
 
 Gives the libunbound version string.
+
+# METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES
+
+The following methods correspond to their equivalents in libunbound:
+
+## _OBJ_->poll()
+
+
+
+## _OBJ_->fd()
+
+
+
+## _OBJ_->wait()
+
+
+
+## _OBJ_->process()
+
+
 
 # CONVENIENCE FUNCTIONS
 
