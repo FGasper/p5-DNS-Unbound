@@ -103,6 +103,18 @@ _ub_ctx_set_option( struct ub_ctx *ctx, const char* opt, const char* val)
     OUTPUT:
         RETVAL
 
+void
+_ub_ctx_debuglevel( struct ub_ctx *ctx, int d )
+    CODE:
+        ub_ctx_debuglevel(ctx, d);
+
+void
+_ub_ctx_debugout( struct ub_ctx *ctx, int fd )
+    CODE:
+        FILE *fstream = fdopen( fd, "a" );
+        fprintf(stderr, "stream: %llu\n", fstream);
+        ub_ctx_debugout( ctx, fstream );
+
 SV *
 _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
     CODE:
@@ -214,7 +226,8 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
             RETVAL = newSViv(retval);
         }
         else {
-            RETVAL = _ub_result_to_svhv_and_free(result);
+            SV *svhv = _ub_result_to_svhv_and_free(result);
+            RETVAL = newRV_inc(svhv);
         }
 
     OUTPUT:

@@ -318,6 +318,36 @@ sub get_option {
 
 #----------------------------------------------------------------------
 
+=head2 I<OBJ>->debuglevel( $LEVEL )
+
+Sets the debug level (an integer). Returns I<OBJ>.
+
+As of libunbound v1.9.2, this is just a way to set the C<verbosity>
+option after configuration is finalized.
+
+=cut
+
+sub debuglevel {
+    _ub_ctx_debuglevel( $_[0]{'_ub'}, $_[1] );
+    return $_[0];
+}
+
+=head2 I<OBJ>->debugout( $FD_OR_FH )
+
+=cut
+
+sub debugout {
+    my ($self, $fd_or_fh) = @_;
+
+    my $fd = ref($fd_or_fh) ? fileno($fd_or_fh) : $fd_or_fh;
+
+    _ub_ctx_debugout( $self->{'_ub'}, $fd );
+
+    return $self;
+}
+
+#----------------------------------------------------------------------
+
 =head2 $str = I<CLASS>->unbound_version()
 
 Gives the libunbound version string.
