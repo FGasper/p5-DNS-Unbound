@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.06
+- Add debug control support.
+
 0.05 - Fri, 7 June 2019
 - Add asynchronous query support.
 - Fix instantiation of ResolveError exception.

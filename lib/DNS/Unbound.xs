@@ -3,6 +3,9 @@
 #include "XSUB.h"
 
 #include <unbound.h>    /* unbound API */
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
 
 SV * _ub_result_to_svhv_and_free (struct ub_result* result) {
     SV *val;
@@ -79,6 +82,15 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     return;
 }
 
+const char *_get_fd_mode_for_fdopen(int fd) {
+    int flags = fcntl( fd, F_GETFL );
+    if ( flags == -1 ) {
+        fprintf(stderr, "fcntl(%d, F_GETFL): %s\n", fd, strerror(errno));
+    }
+
+    return (flags & O_APPEND) ? "a" : "w";
+}
+
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
@@ -111,8 +123,17 @@ _ub_ctx_debuglevel( struct ub_ctx *ctx, int d )
 void
 _ub_ctx_debugout( struct ub_ctx *ctx, int fd )
     CODE:
-        FILE *fstream = fdopen( fd, "a" );
-        fprintf(stderr, "stream: %llu\n", fstream);
+
+        // Linux doesn’t care, but MacOS will segfault if you
+        // setvbuf() on an append stream opened on a non-append fd.
+        FILE *fstream = fdopen( fd, _get_fd_mode_for_fdopen(fd) );
+
+        if (fstream == NULL) {
+            fprintf(stderr, "fdopen failed!!\n");
+        }
+
+        setvbuf(fstream, NULL, _IONBF, 0);
+
         ub_ctx_debugout( ctx, fstream );
 
 SV *

@@ -59,7 +59,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.05';
+    $VERSION = '0.06_01';
     XSLoader::load();
 }
 
@@ -333,6 +333,11 @@ sub debuglevel {
 }
 
 =head2 I<OBJ>->debugout( $FD_OR_FH )
+
+Accepts a file descriptor or Perl filehandle and designates that
+as the destination for libunbound diagnostic information.
+
+Returns I<OBJ>.
 
 =cut
 

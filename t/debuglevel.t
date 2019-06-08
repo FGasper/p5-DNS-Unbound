@@ -13,14 +13,18 @@ use_ok('DNS::Unbound');
 
 my $fh = File::Temp::tempfile();
 
-my $dns = DNS::Unbound->new()->debuglevel(2);
-$dns->debugout($fh);
-$dns->resolve( '.', 'NS' );
+do {
+    my $dns = DNS::Unbound->new()->debuglevel(2);
+    $dns->debugout($fh);
+    $dns->resolve( '.', 'NS' );
+};
 
-my $len = 0 + sysseek($fh, 0, 1);
+my $len = (stat $fh)[7];
 ok( $len, "debugout() and debuglevel() ($len)" );
 
 sysseek($fh, 0, 0);
-sysread( $fh, my $output, $len );
+sysread( $fh, my $output, (stat $fh)[7] );
 
 like( $output, qr<unbound>, 'output is as expected' );
+
+done_testing();
