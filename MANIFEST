@@ -14,6 +14,7 @@ lib/DNS/Unbound/X/ResolveError.pm
 t/async.t
 t/convenience.t
 t/debuglevel.t
+t/debugout_badfd.t
 t/destruct.t
 t/load.t
 t/option.t
