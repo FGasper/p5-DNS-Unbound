@@ -347,7 +347,7 @@ sub debugout {
     my $fd = ref($fd_or_fh) ? fileno($fd_or_fh) : $fd_or_fh;
 
     my $mode = _get_fd_mode_for_fdopen($fd) or do {
-        die DNS::Unbound::X->create('BadDebugFH', $fd, $!);
+        die DNS::Unbound::X->create('BadDebugFD', $fd, $!);
     };
 warn "mode: [$mode]\n";
 

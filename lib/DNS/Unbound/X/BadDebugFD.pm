@@ -1,4 +1,4 @@
-package DNS::Unbound::X::BadDebugFilehandle;
+package DNS::Unbound::X::BadDebugFD;
 
 use strict;
 use warnings;

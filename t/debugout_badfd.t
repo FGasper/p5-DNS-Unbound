@@ -14,17 +14,16 @@ use_ok('DNS::Unbound');
 
 my $fd;
 
+my $dns = DNS::Unbound->new();
+
 do {
-    #my $fh = File::Temp::tempfile();
-    pipe my $rfh, my $fh;
+    my $fh = File::Temp::tempfile();
     $fd = fileno $fh;
     close $fh;
 };
 
-diag "FD: $fd\n";
-
 throws_ok(
-    sub { my $dns = DNS::Unbound->new()->debugout($fd) },
+    sub { $dns->debugout($fd) },
     'DNS::Unbound::X::BadDebugFD',
     'error when bad FD given to debugout()',
 );
