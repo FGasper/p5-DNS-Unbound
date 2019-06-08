@@ -82,15 +82,6 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     return;
 }
 
-const char *_get_fd_mode_for_fdopen(int fd) {
-    int flags = fcntl( fd, F_GETFL );
-    if ( flags == -1 ) {
-        return NULL;
-    }
-
-    return (flags & O_APPEND) ? "a" : "w";
-}
-
 void _die( pTHX_ I32 flags, char **argv ) {
     call_argv( "DNS::Unbound::_die", G_EVAL | flags, argv );
 
@@ -127,16 +118,8 @@ _ub_ctx_debuglevel( struct ub_ctx *ctx, int d )
         ub_ctx_debuglevel(ctx, d);
 
 void
-_ub_ctx_debugout( struct ub_ctx *ctx, int fd )
+_ub_ctx_debugout( struct ub_ctx *ctx, int fd, const char *mode )
     CODE:
-        const char *mode = _get_fd_mode_for_fdopen(fd);
-
-        if (mode == NULL) {
-fprintf(stderr, "mode failed\n");
-            _die("BadDebugFD", fd, errno);
-        }
-fprintf(stderr, "mode: %s\n", mode);
-            //croak("fcntl(%d, F_GETFL): %s\n", fd, strerror(errno));
 
         // Linux doesn’t care, but MacOS will segfault if you
         // setvbuf() on an append stream opened on a non-append fd.
@@ -149,6 +132,22 @@ fprintf(stderr, "mode: %s\n", mode);
         setvbuf(fstream, NULL, _IONBF, 0);
 
         ub_ctx_debugout( ctx, fstream );
+
+const char *
+_get_fd_mode_for_fdopen(int fd)
+    CODE:
+        int flags = fcntl( fd, F_GETFL );
+
+        if ( flags == -1 ) {
+            SETERRNO( errno, 0 );
+            RETVAL = "";
+        }
+        else {
+            RETVAL = (flags & O_APPEND) ? "a" : "w";
+        }
+    OUTPUT:
+        RETVAL
+
 
 SV *
 _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)

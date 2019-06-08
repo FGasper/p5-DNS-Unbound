@@ -346,7 +346,12 @@ sub debugout {
 
     my $fd = ref($fd_or_fh) ? fileno($fd_or_fh) : $fd_or_fh;
 
-    _ub_ctx_debugout( $self->{'_ub'}, $fd );
+    my $mode = _get_fd_mode_for_fdopen($fd) or do {
+        die DNS::Unbound::X->create('BadDebugFH', $fd, $!);
+    };
+warn "mode: [$mode]\n";
+
+    _ub_ctx_debugout( $self->{'_ub'}, $fd, $mode );
 
     return $self;
 }
@@ -547,14 +552,6 @@ sub DESTROY {
         delete $_[0]->{'_dns'};
         return $_[0];
     }
-}
-
-#----------------------------------------------------------------------
-
-sub _die {
-    my ($subclass, @args) = @_;
-
-    die DNS::Unbound::X->create($subclass, @args);
 }
 
 #----------------------------------------------------------------------
