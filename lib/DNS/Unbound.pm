@@ -349,7 +349,6 @@ sub debugout {
     my $mode = _get_fd_mode_for_fdopen($fd) or do {
         die DNS::Unbound::X->create('BadDebugFD', $fd, $!);
     };
-warn "mode: [$mode]\n";
 
     _ub_ctx_debugout( $self->{'_ub'}, $fd, $mode );
 

@@ -82,12 +82,6 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     return;
 }
 
-void _die( pTHX_ I32 flags, char **argv ) {
-    call_argv( "DNS::Unbound::_die", G_EVAL | flags, argv );
-
-    _croak(NULL);
-}
-
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
