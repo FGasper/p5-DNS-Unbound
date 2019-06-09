@@ -114,16 +114,28 @@ _ub_ctx_debuglevel( struct ub_ctx *ctx, int d )
 void
 _ub_ctx_debugout( struct ub_ctx *ctx, int fd, const char *mode )
     CODE:
+        FILE *fstream;
 
-        // Linux doesn’t care, but MacOS will segfault if you
-        // setvbuf() on an append stream opened on a non-append fd.
-        FILE *fstream = fdopen( fd, mode );
-
-        if (fstream == NULL) {
-            fprintf(stderr, "fdopen failed!!\n");
+        // Since libunbound does equality checks against stderr,
+        // let’s ensure we use that same pointer.
+        if (fd == fileno(stderr)) {
+            fstream = stderr;
         }
+        else if (fd == fileno(stdout)) {
+            fstream = stdout;
+        }
+        else {
 
-        setvbuf(fstream, NULL, _IONBF, 0);
+            // Linux doesn’t care, but MacOS will segfault if you
+            // setvbuf() on an append stream opened on a non-append fd.
+            fstream = fdopen( fd, mode );
+
+            if (fstream == NULL) {
+                fprintf(stderr, "fdopen failed!!\n");
+            }
+
+            setvbuf(fstream, NULL, _IONBF, 0);
+        }
 
         ub_ctx_debugout( ctx, fstream );
 

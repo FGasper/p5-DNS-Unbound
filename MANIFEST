@@ -15,6 +15,7 @@ t/async.t
 t/convenience.t
 t/debuglevel.t
 t/debugout_badfd.t
+t/debugout_bug.t
 t/destruct.t
 t/load.t
 t/option.t
