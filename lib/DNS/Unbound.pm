@@ -59,7 +59,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.07_01';
+    $VERSION = '0.07_02';
     XSLoader::load();
 }
 
