@@ -268,4 +268,8 @@ BOOT:
 void
 _destroy_context( struct ub_ctx *ctx )
     CODE:
+
+        // Workaround for https://github.com/NLnetLabs/unbound/issues/39:
+        ub_ctx_debugout(ctx, stderr);
+
         ub_ctx_delete(ctx);
