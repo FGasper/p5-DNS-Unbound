@@ -1,4 +1,4 @@
-use ExtUtils::MakeMaker 7.12; # for XSMULTI option
+use ExtUtils::MakeMaker;
 
 my $pkgconfig_name = 'libunbound';
 
@@ -27,15 +27,9 @@ WriteMakefile(
     CCFLAGS        => "$cflags -Wall -std=c99",
     LIBS           => [ $ldflags ],
     LICENSE        => 'perl',
-    XSMULTI        => 1,
-
-    CONFIGURE_REQUIRES => {
-        'ExtUtils::MakeMaker' => 7.12,
-    },
 
     PREREQ_PM => {
         'X::Tiny' => 0,
-        'XSLoader' => 0.24,
         'Promise::ES6' => 0.04,
     },
 
