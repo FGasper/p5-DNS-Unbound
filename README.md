@@ -145,11 +145,15 @@ Note that [Socket](https://metacpan.org/pod/Socket) provides the `inet_ntoa()` a
 functions for decoding the values of `A` and `AAAA` records.
 
 The following may be called either as object methods or as static
-functions (but not as class methods):
+functions (but not as class methods).
+
+**NOTE:** Instead of using these, see [DNS::Unbound::Result](https://metacpan.org/pod/DNS::Unbound::Result)’s
+documentation for a more robust solution.
 
 ## $decoded = decode\_name($encoded)
 
-Decodes a DNS name. Useful for, e.g., `NS` query results.
+Decodes a DNS name. Useful for, e.g., `NS`, `CNAME`, and `PTR` query
+results.
 
 Note that this function’s return will normally include a trailing `.`
 because of the trailing NUL byte in an encoded DNS name. This is normal

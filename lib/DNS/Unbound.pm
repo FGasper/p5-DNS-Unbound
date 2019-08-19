@@ -54,6 +54,7 @@ L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver.
 
 use XSLoader ();
 
+use DNS::Unbound::Result ();
 use DNS::Unbound::X ();
 
 our ($VERSION);
@@ -63,7 +64,9 @@ BEGIN {
     XSLoader::load();
 }
 
-use constant RR => {
+# Retain this to avoid having to load Net::DNS::Parameters
+# except in unusual cases.
+use constant _COMMON_RR => {
     A          => 1,
     AAAA       => 28,
     AFSDB      => 18,
@@ -164,7 +167,8 @@ to use C<resolve_async()> instead.
 
 sub resolve {
     my $type = $_[2] || die 'Need type!';
-    $type = RR()->{$type} || $type;
+
+    $type = _normalize_type_to_number($type);
 
     my $result = _resolve( $_[0]->{'_ub'}, $_[1], $type, $_[3] || () );
 
@@ -172,7 +176,22 @@ sub resolve {
         die _create_resolve_error($result);
     }
 
-    return $result;
+    return DNS::Unbound::Result->new( %$result );
+}
+
+sub _normalize_type_to_number {
+    my ($type) = @_;
+
+    if ($type =~ tr<0-9><>c) {
+        return _COMMON_RR()->{$type} || do {
+            local ($@, $!);
+
+            require Net::DNS::Parameters;
+            Net::DNS::Parameters::typebyname($type);
+        };
+    }
+
+    return $type;
 }
 
 sub _create_resolve_error {
@@ -197,7 +216,7 @@ the methods you’ll need to use in tandem with this one.
 
 sub resolve_async {
     my $type = $_[2] || die 'Need type!';
-    $type = RR()->{$type} || $type;
+    $type = $type = _normalize_type_to_number($type);
 
     # Prevent memory leaks.
     my $ctx = $_[0]->{'_ub'};
@@ -460,6 +479,7 @@ sub _check_promises {
 
                 if ( ref $dns_hr->{'value'} ) {
                     $key = 'res';
+                    $dns_hr->{'value'} = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
                 }
                 else {
                     $key = 'rej';
@@ -498,11 +518,15 @@ Note that L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
 functions for decoding the values of C<A> and C<AAAA> records.
 
 The following may be called either as object methods or as static
-functions (but not as class methods):
+functions (but not as class methods).
+
+B<NOTE:> Instead of using these, see L<DNS::Unbound::Result>’s
+documentation for a more robust solution.
 
 =head2 $decoded = decode_name($encoded)
 
-Decodes a DNS name. Useful for, e.g., C<NS> query results.
+Decodes a DNS name. Useful for, e.g., C<NS>, C<CNAME>, and C<PTR> query
+results.
 
 Note that this function’s return will normally include a trailing C<.>
 because of the trailing NUL byte in an encoded DNS name. This is normal
