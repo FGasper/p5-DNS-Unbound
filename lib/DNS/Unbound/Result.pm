@@ -15,8 +15,8 @@ This class represents a DNS query result from L<DNS::Unbound>.
 
 =head1 ACCESSORS
 
-The following correspond to the members of C<struct ub_result>
-(cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>):
+This class includes an accessor for each member of C<struct ub_result>
+(cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>).
 
 The following all return scalars:
 
@@ -32,15 +32,6 @@ The following all return scalars:
 
 C<data()> returns an array reference of strings that contain the query
 result in DNS-native RDATA encoding.
-
-Since that’s not usually very convenient, this class also exposes a
-C<to_net_dns()> method that returns a reference to an array of
-L<Net::DNS::RR> instances.
-
-So, for example, to get a TXT query result’s value as a list of
-character strings, you could do:
-
-    @cstrings = map { $_->txtdata() } @{ $result->to_net_dns() }
 
 =cut
 
@@ -58,10 +49,31 @@ use Class::XSAccessor {
         nxdomain => 'nxdomain',
         secure => 'secure',
         bogus => 'bogus',
-        why_bogus => 'bogus',
+        why_bogus => 'why_bogus',
         ttl => 'ttl',
     },
 };
+
+=head1 ADDITIONAL METHODS
+
+=head2 $objs_ar = I<OBJ>->to_net_dns()
+
+The C<data()> accessor’s return values are raw RDATA. Your application
+likely prefers to work with parsed DNS data, though. This method facilitates
+that by loading L<Net::DNS::RR> and returning a reference to an array of
+instances of that class (i.e., probably a subclass of it like
+L<Net::DNS::RR::NS>).
+
+So, for example, to get a TXT query result’s value as a list of
+character strings, you could do:
+
+    @cstrings = map { $_->txtdata() } @{ $result->to_net_dns() }
+
+(NB: It would be ideal to return a single L<Net::DNS::Packet> instance
+rather than the array reference, but C<struct ub_result> doesn’t expose
+enough of the underlying query’s DNS details for that to make sense.)
+
+=cut
 
 sub to_net_dns {
     my ($self) = @_;
@@ -71,7 +83,7 @@ sub to_net_dns {
 
     my @rrset = map {
         Net::DNS::RR->new(
-            owner => $self->{'qtype'},
+            owner => $self->{'qname'},
             type => $self->{'qtype'},
             class => $self->{'qclass'},
             ttl => $self->{'ttl'},

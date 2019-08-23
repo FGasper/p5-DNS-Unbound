@@ -8,6 +8,8 @@ Revision history for Perl module DNS::Unbound
   instances obviates the need to decode query results manually.
   The decode_name() and decode_character_strings() functions will be
   retained as a convenience for contexts where they’re useful.
+- resolve() and resolve_async() now fall back on Net::DNS::Parameters
+  to parse any unrecognized query types.
 
 0.09 - Sat, 27 July 2019
 - Remove dependency on recent ExtUtils::MakeMaker version.

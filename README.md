@@ -141,14 +141,13 @@ The following methods correspond to their equivalents in libunbound.
 
 # CONVENIENCE FUNCTIONS
 
-Note that [Socket](https://metacpan.org/pod/Socket) provides the `inet_ntoa()` and `inet_ntop()`
+The following may be called either as object methods or as static
+functions (but not as class methods). In addition to these,
+[Socket](https://metacpan.org/pod/Socket) provides the `inet_ntoa()` and `inet_ntop()`
 functions for decoding the values of `A` and `AAAA` records.
 
-The following may be called either as object methods or as static
-functions (but not as class methods).
-
-**NOTE:** Instead of using these, see [DNS::Unbound::Result](https://metacpan.org/pod/DNS::Unbound::Result)’s
-documentation for a more robust solution.
+**NOTE:** [DNS::Unbound::Result](https://metacpan.org/pod/DNS::Unbound::Result)’s `to_net_dns()` provides a heavier but
+more robust way to parse query result data.
 
 ## $decoded = decode\_name($encoded)
 

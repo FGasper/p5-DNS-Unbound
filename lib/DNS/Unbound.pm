@@ -60,7 +60,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.09';
+    $VERSION = '0.10_01';
     XSLoader::load();
 }
 
@@ -514,14 +514,13 @@ sub _check_promises {
 
 =head1 CONVENIENCE FUNCTIONS
 
-Note that L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
+The following may be called either as object methods or as static
+functions (but not as class methods). In addition to these,
+L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
 functions for decoding the values of C<A> and C<AAAA> records.
 
-The following may be called either as object methods or as static
-functions (but not as class methods).
-
-B<NOTE:> Instead of using these, see L<DNS::Unbound::Result>’s
-documentation for a more robust solution.
+B<NOTE:> L<DNS::Unbound::Result>’s C<to_net_dns()> provides a heavier but
+more robust way to parse query result data.
 
 =head2 $decoded = decode_name($encoded)
 
