@@ -37,7 +37,7 @@ eval {
 
     diag explain $result;
 
-    is_deeply( $result->to_net_dns(), [], 'to_net_dns() when there’s no data' );
+    is_deeply( $result->to_net_dns_rrs(), [], 'to_net_dns_rrs() when there’s no data' );
 
     $result = $dns->resolve('com', 'NS');
     my @data = @{ $result->data() };
@@ -67,13 +67,13 @@ eval {
     ok( !$result->nxdomain(), '!nxdomain()' );
     ok( !$result->{nxdomain}, '!{nxdomain}' );
 
-    my $net_dns_rr = $result->to_net_dns();
+    my $net_dns_rr = $result->to_net_dns_rrs();
 
     if (@$net_dns_rr) {
 
         my $ns_obj = $net_dns_rr->[0];
 
-        isa_ok( $ns_obj, 'Net::DNS::RR::NS', 'to_net_dns() result' );
+        isa_ok( $ns_obj, 'Net::DNS::RR::NS', 'to_net_dns_rrs() result' );
 
         is( $ns_obj->ttl(), $result->ttl(), 'ttl() match' );
         is( $ns_obj->ttl(), $result->{ttl}, '{ttl} match' );

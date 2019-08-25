@@ -56,7 +56,7 @@ use Class::XSAccessor {
 
 =head1 ADDITIONAL METHODS
 
-=head2 $objs_ar = I<OBJ>->to_net_dns()
+=head2 $objs_ar = I<OBJ>->to_net_dns_rrs()
 
 The C<data()> accessor’s return values are raw RDATA. Your application
 likely prefers to work with parsed DNS data, though. This method facilitates
@@ -67,7 +67,7 @@ L<Net::DNS::RR::NS>).
 So, for example, to get a TXT query result’s value as a list of
 character strings, you could do:
 
-    @cstrings = map { $_->txtdata() } @{ $result->to_net_dns() }
+    @cstrings = map { $_->txtdata() } @{ $result->to_net_dns_rrs() }
 
 (NB: It would be ideal to return a single L<Net::DNS::Packet> instance
 rather than the array reference, but C<struct ub_result> doesn’t expose
@@ -75,7 +75,7 @@ enough of the underlying query’s DNS details for that to make sense.)
 
 =cut
 
-sub to_net_dns {
+sub to_net_dns_rrs {
     my ($self) = @_;
 
     local ($@, $!);

@@ -519,7 +519,7 @@ functions (but not as class methods). In addition to these,
 L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
 functions for decoding the values of C<A> and C<AAAA> records.
 
-B<NOTE:> L<DNS::Unbound::Result>’s C<to_net_dns()> provides a heavier but
+B<NOTE:> L<DNS::Unbound::Result>’s C<to_net_dns_rrs()> provides a heavier but
 more robust way to parse query result data.
 
 =head2 $decoded = decode_name($encoded)
