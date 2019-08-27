@@ -60,7 +60,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.10_01';
+    $VERSION = '0.10';
     XSLoader::load();
 }
 
@@ -148,17 +148,9 @@ Runs a synchronous query for a given $NAME and $TYPE. $TYPE may be
 expressed numerically or, for convenience, as a string. $CLASS is
 optional and defaults to 1 (C<IN>), which is probably what you want.
 
-Returns a reference to a hash that corresponds
-to a libunbound C<struct ub_result>
-(cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>),
-excluding C<len>, C<answer_packet>, and C<answer_len>.
+Returns a L<DNS::Unbound::Result> instance.
 
-B<NOTE:> Members of C<data> are in their DNS-native RDATA encodings.
-(libunbound doesn’t track which record type uses which encoding, so
-neither does DNS::Unbound.)
-To decode some common record types, see L</CONVENIENCE FUNCTIONS> below.
-
-Also B<NOTE:> libunbound doesn’t seem to offer effective controls for
+B<NOTE:> libunbound doesn’t seem to offer effective controls for
 timing out a synchronous query.
 If timeouts are relevant for you, you probably need
 to use C<resolve_async()> instead.

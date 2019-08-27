@@ -15,7 +15,7 @@ This class represents a DNS query result from L<DNS::Unbound>.
 
 =head1 ACCESSORS
 
-This class includes an accessor for each member of C<struct ub_result>
+This class includes an accessor for most members of C<struct ub_result>
 (cf. L<libunbound(3)|https://nlnetlabs.nl/documentation/unbound/libunbound/>).
 
 The following all return scalars:
@@ -69,7 +69,7 @@ character strings, you could do:
 
     @cstrings = map { $_->txtdata() } @{ $result->to_net_dns_rrs() }
 
-(NB: It would be ideal to return a single L<Net::DNS::Packet> instance
+(NB: It might be ideal to return a single L<Net::DNS::Packet> instance
 rather than the array reference, but C<struct ub_result> doesn’t expose
 enough of the underlying query’s DNS details for that to make sense.)
 

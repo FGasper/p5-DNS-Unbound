@@ -1,6 +1,6 @@
 Revision history for Perl module DNS::Unbound
 
-0.10
+0.10 - Mon, 26 Aug 2019
 - Query results are now represented as instances of DNS::Unbound::Result
   rather than simple hash references. Existing implementations should
   continue to work.
