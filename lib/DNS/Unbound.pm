@@ -248,11 +248,13 @@ sub resolve_async {
 
     my $query_id = $async_ar->[1];
 
-    $dns{'id'} = $query_id;
+    $_[0]->{'_queries_dns'}{ $query_id } = \%dns;
+    $_[0]->{'_queries_lookup'}{ $query_id } = undef;
+
+    # NB: If %dns referenced $query it would be a circular reference.
+    @dns{'id', 'queries_lookup'} = ($query_id, $_[0]->{'_queries_lookup'});
 
     $query->_set_dns(\%dns);
-
-    $_[0]->{'_queries_hr'}{ $query_id } = $query;
 
     return $query;
 }
@@ -279,7 +281,7 @@ already been sent.
 Returns I<OBJ>.
 
 B<NOTE:> Perl’s relationship with threads is … complicated.
-This option is not well-tested. If in doubt, just skip it.
+Caveat emptor. If in doubt, just leave this alone.
 
 =cut
 
@@ -405,7 +407,8 @@ Gives the libunbound version string.
 
 =head1 METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES
 
-The following methods correspond to their equivalents in libunbound.
+Unless otherwise noted, the following methods correspond to their
+equivalents in libunbound.
 
 =head2 I<OBJ>->poll()
 
@@ -455,17 +458,28 @@ sub process {
     return $ret;
 }
 
+=head2 I<OBJ>->count_pending_promises()
+
+Returns the number of outstanding (asynchronous) queries.
+
+=cut
+
+sub count_pending_promises {
+    my ($self) = @_;
+
+    return $self->{'_queries_lookup'} ? 0 + keys %{ $self->{'_queries_lookup'} } : 0;
+}
+
 #----------------------------------------------------------------------
 
 sub _check_promises {
     my ($self) = @_;
 
-    if ( my $asyncs_hr = $self->{'_queries_hr'} ) {
-        for (values %$asyncs_hr) {
-            my $dns_hr = $_->_get_dns();
-
+    if ( my $asyncs_hr = $self->{'_queries_dns'} ) {
+        for my $dns_hr (values %$asyncs_hr) {
             if (defined $dns_hr->{'value'}) {
                 delete $asyncs_hr->{ $dns_hr->{'id'} };
+                delete $self->{'_queries_lookup'}{ $dns_hr->{'id'} };
 
                 my $key;
 
@@ -547,8 +561,7 @@ sub decode_character_strings {
 sub DESTROY {
     $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
         if ($$ == $_[0]->{'_pid'}) {
-            if (my $queries_hr = $_[0]->{'_queries_hr'}) {
-                $_->_forget_dns() for values %$queries_hr;
+            if (my $queries_hr = $_[0]->{'_queries_dns'}) {
                 %$queries_hr = ();
             }
         }

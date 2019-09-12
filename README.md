@@ -77,7 +77,7 @@ already been sent.
 Returns _OBJ_.
 
 **NOTE:** Perl’s relationship with threads is … complicated.
-This option is not well-tested. If in doubt, just skip it.
+Caveat emptor. If in doubt, just leave this alone.
 
 ## _OBJ_->set\_option( $NAME => $VALUE )
 
@@ -113,7 +113,8 @@ Gives the libunbound version string.
 
 # METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES
 
-The following methods correspond to their equivalents in libunbound.
+Unless otherwise noted, the following methods correspond to their
+equivalents in libunbound.
 
 ## _OBJ_->poll()
 
@@ -130,6 +131,10 @@ The following methods correspond to their equivalents in libunbound.
 ## _OBJ_->process()
 
 
+
+## _OBJ_->count\_pending\_promises()
+
+Returns the number of outstanding (asynchronous) queries.
 
 # CONVENIENCE FUNCTIONS
 
