@@ -6,6 +6,9 @@ DNS::Unbound - libunbound in Perl
 
     my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
 
+    # This appears to be safe:
+    $dns->enable_threads();
+
     my $verbosity = $dns->get_option( 'verbosity' );
 
     $dns->set_option( verbosity => 1 + $verbosity );
@@ -76,8 +79,8 @@ already been sent.
 
 Returns _OBJ_.
 
-**NOTE:** Perl’s relationship with threads is … complicated.
-Caveat emptor. If in doubt, just leave this alone.
+**NOTE:** Despite Perl’s iffy relationship with threads, this appears
+to work without issue.
 
 ## _OBJ_->set\_option( $NAME => $VALUE )
 
@@ -134,7 +137,7 @@ equivalents in libunbound.
 
 ## _OBJ_->count\_pending\_promises()
 
-Returns the number of outstanding (asynchronous) queries.
+Returns the number of outstanding asynchronous queries.
 
 # CONVENIENCE FUNCTIONS
 
