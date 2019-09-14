@@ -63,7 +63,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.11';
+    $VERSION = '0.12';
     XSLoader::load();
 }
 
@@ -461,13 +461,13 @@ sub process {
     return $ret;
 }
 
-=head2 I<OBJ>->count_pending_promises()
+=head2 I<OBJ>->count_pending_queries()
 
 Returns the number of outstanding asynchronous queries.
 
 =cut
 
-sub count_pending_promises {
+sub count_pending_queries {
     my ($self) = @_;
 
     return $self->{'_queries_lookup'} ? 0 + keys %{ $self->{'_queries_lookup'} } : 0;
