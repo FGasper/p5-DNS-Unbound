@@ -135,7 +135,7 @@ equivalents in libunbound.
 
 
 
-## _OBJ_->count\_pending\_promises()
+## _OBJ_->count\_pending\_queries()
 
 Returns the number of outstanding asynchronous queries.
 
