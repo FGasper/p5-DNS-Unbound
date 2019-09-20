@@ -23,4 +23,13 @@ my $query = $dns->resolve_async('metacpan.org', 'A')->then( sub {
     print( $_->string() . $/) for @$rrs;
 } )->finally($cv);
 
+my $timer = AnyEvent->timer(
+    after => 10,
+    cb => sub {
+        $query->cancel();
+        print "Timed out!$/";
+        $cv->();
+    },
+);
+
 $cv->recv();

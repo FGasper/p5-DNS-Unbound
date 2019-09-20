@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.13
+- Add example to demonstrate interaction with AnyEvent.
+
 0.12 - Sat, 14 Sep 2019
 - Rename count_pending_promises() to count_pending_queries().
 

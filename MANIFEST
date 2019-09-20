@@ -6,6 +6,7 @@ MANIFEST
 Makefile.PL
 README.md
 Unbound.xs
+examples/anyevent.pl
 lib/DNS/Unbound.pm
 lib/DNS/Unbound/AsyncQuery.pm
 lib/DNS/Unbound/Result.pm
