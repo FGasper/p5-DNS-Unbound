@@ -579,6 +579,12 @@ sub DESTROY {
 
 1;
 
+=head1 LICENSE & COPYRIGHT
+
+Copyright 2019 Gasper Software Consulting.
+
+This library is licensed under the same terms as Perl itself.
+
 =head1 REPOSITORY
 
 L<https://github.com/FGasper/p5-DNS-Unbound>
