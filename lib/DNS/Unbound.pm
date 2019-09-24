@@ -25,13 +25,13 @@ Synchronous queries:
     my $res_hr = $dns->resolve( 'cpan.org', 'NS' );
 
     # See below about encodings in “data”.
-    my @ns = map { $dns->decode_name($_) } @{ $res_hr->{'data'} };
+    my @ns = map { $dns->decode_name($_) } @{ $res_hr->data() };
 
 Asynchronous queries use L<the “Promise” pattern|https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises>:
 
     my $query1 = $dns->resolve_async( 'usa.gov', 'A' )->then(
-        sub { my $data = shift()->{'data'}; ... },  # success handler
-        sub { ... },                                # failure handler
+        sub { my $data = shift()->data(); ... },  # success handler
+        sub { ... },                              # failure handler
     );
 
     my $query2 = $dns->resolve_async( 'in-addr.arpa', 'NS' )->then(

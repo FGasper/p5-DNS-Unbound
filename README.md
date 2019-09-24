@@ -163,6 +163,12 @@ and expected.
 Decodes a list of character-strings into component strings,
 returned as an array reference. Useful for `TXT` query results.
 
+# LICENSE & COPYRIGHT
+
+Copyright 2019 Gasper Software Consulting.
+
+This library is licensed under the same terms as Perl itself.
+
 # REPOSITORY
 
 [https://github.com/FGasper/p5-DNS-Unbound](https://github.com/FGasper/p5-DNS-Unbound)
