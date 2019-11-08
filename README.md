@@ -37,6 +37,9 @@ Asynchronous queries use [the “Promise” pattern](https://developer.mozilla.o
 
     $dns->wait();
 
+See `examples/` in the distribution for demonstrations of
+making this module interface with [AnyEvent](https://metacpan.org/pod/AnyEvent) or [IO::Async](https://metacpan.org/pod/IO::Async).
+
 # DESCRIPTION
 
 This library is a Perl interface to NLNetLabs’s widely-used

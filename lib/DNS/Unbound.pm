@@ -44,6 +44,9 @@ Asynchronous queries use L<the “Promise” pattern|https://developer.mozilla.o
 
     $dns->wait();
 
+See F<examples/> in the distribution for demonstrations of
+making this module interface with L<AnyEvent> or L<IO::Async>.
+
 =cut
 
 =head1 DESCRIPTION
@@ -262,13 +265,18 @@ sub resolve_async {
     return $query;
 }
 
+my $installed_cancel_cr;
+
 sub _load_asyncquery_if_needed {
     if (!$INC{'DNS/Unbound/AsyncQuery.pm'}) {
         local ($@, $!);
         require DNS::Unbound::AsyncQuery;
-
-        $DNS::Unbound::AsyncQuery::CANCEL_CR = \&DNS::Unbound::_ub_cancel;
     }
+
+    $installed_cancel_cr ||= do {
+        $DNS::Unbound::AsyncQuery::CANCEL_CR = \&DNS::Unbound::_ub_cancel;
+        1;
+    };
 
     return;
 }
