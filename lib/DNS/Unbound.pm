@@ -66,7 +66,7 @@ use DNS::Unbound::X ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.13_01';
+    $VERSION = '0.13';
     XSLoader::load();
 }
 
