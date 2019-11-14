@@ -1,6 +1,6 @@
 Revision history for Perl module DNS::Unbound
 
-0.14
+0.14 - Thu, 14 Nov 2019
 - Rewrite AsyncQuery.pm to avoid Promise::ES6 internals.
 
 0.13 - Fri, 8 Nov 2019
