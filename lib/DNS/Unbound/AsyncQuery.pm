@@ -109,6 +109,8 @@ sub DESTROY {
 
     delete $QUERY_OBJ_DNS{$self};
 
+    $self->SUPER::DESTROY() if Promise::ES6->can('DESTROY');
+
     return;
 }
 
