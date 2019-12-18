@@ -504,10 +504,7 @@ sub _check_promises {
                     $dns_hr->{'value'} = _create_resolve_error($dns_hr->{'value'});
                 }
 
-                $dns_hr->{'fulfilled'} ||= do {
-                    eval { $dns_hr->{$key}->($dns_hr->{'value'}) };
-                    1;
-                };
+                $dns_hr->{$key}->($dns_hr->{'value'});
             }
         }
     }

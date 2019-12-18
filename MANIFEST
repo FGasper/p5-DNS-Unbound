@@ -15,6 +15,7 @@ lib/DNS/Unbound/X.pm
 lib/DNS/Unbound/X/BadDebugFD.pm
 lib/DNS/Unbound/X/Base.pm
 lib/DNS/Unbound/X/ResolveError.pm
+lib/DNS/Unbound/XSPromise.pm
 t/async.t
 t/asyncquery.t
 t/convenience.t

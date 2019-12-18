@@ -1,4 +1,4 @@
-package DNS::Unbound::AsyncQuery;
+package DNS::Unbound::XSPromise;
 
 use strict;
 use warnings;
