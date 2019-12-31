@@ -10,7 +10,7 @@ use experimental 'signatures';
 sub new ($class, $cr) {
     my $deferred = AnyEvent::XSPromises::deferred();
 
-    my $self = [ $deferred->promise(), $deferred ];
+    my $self = [ $deferred->promise() ];
 
     $cr->(
         sub { $deferred->resolve(shift) },
@@ -20,8 +20,8 @@ sub new ($class, $cr) {
     return bless $self, $class;
 }
 
-sub then ($self, $on_res, $on_rej) {
-    return bless [ $self->[0]->then( $on_res, $on_rej ) ];
+sub then ($self, $on_res, $on_rej = undef) {
+    return bless [ $self->[0]->then( $on_res, $on_rej ) ], ref($self);
 }
 
 sub catch ($self, $on_rej) {

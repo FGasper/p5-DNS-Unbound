@@ -1,9 +1,25 @@
-package DNS::Unbound::XSPromise;
+package DNS::Unbound::AsyncQuery;
 
 use strict;
 use warnings;
 
-use parent qw( Promise::ES6 );
+our @ISA;
+
+BEGIN {
+    if ($ENV{'DNS_UNBOUND_USE_PROMISE_XS'}) {
+        use blib "/Users/felipe/code/p5-Promise-XS";
+        require Promise::XS;
+        push @ISA, 'Promise::XS::Promise';
+    }
+    elsif ($ENV{'DNS_UNBOUND_USE_ANYEVENT_XSPROMISES'}) {
+        require AnyEvent::XSPromises;
+        push @ISA, 'AnyEvent::XSPromises::PromisePtr';
+    }
+    else {
+        require Promise::ES6;
+        push @ISA, 'Promise::ES6';
+    }
+}
 
 =encoding utf-8
 
@@ -80,10 +96,21 @@ sub then {
     my $self = shift;
 
     my $new = $self->SUPER::then(@_);
+    bless $new, ref $self;  # for XSPromises
 
     $new->_set_dns( $self->_get_dns() );
 
     return $new;
+}
+
+# Promise::XS doesn’t, as of this release, define catch() or finally()
+# as a wrapper around then(). So let’s force that.
+sub catch {
+    return $_[0]->then( undef, $_[1] );
+}
+
+sub finally {
+    return $_[0]->then( $_[1], $_[1] );
 }
 
 # ----------------------------------------------------------------------
@@ -109,7 +136,7 @@ sub DESTROY {
 
     delete $QUERY_OBJ_DNS{$self};
 
-    $self->SUPER::DESTROY() if Promise::ES6->can('DESTROY');
+    $self->SUPER::DESTROY() if $ISA[0]->can('DESTROY');
 
     return;
 }

@@ -221,18 +221,36 @@ sub resolve_async {
     my $name = $_[1];
     my $class = $_[3] || 1;
 
-    my ($res, $rej);
-
     _load_asyncquery_if_needed();
 
-    my $query = DNS::Unbound::AsyncQuery->new( sub {
-        ($res, $rej) = @_;
-    } );
+    my $use_promise_xs = $ENV{'DNS_UNBOUND_USE_PROMISE_XS'};
+    my $use_anyevent_xspromises = $ENV{'DNS_UNBOUND_USE_ANYEVENT_XSPROMISES'};
+
+    my ($res, $rej);
+    my ($query, $deferred);
+
+    if ($use_promise_xs) {
+        require Promise::XS;
+        $deferred = Promise::XS::deferred();
+        $query = bless $deferred->promise(), 'DNS::Unbound::AsyncQuery';
+    }
+    elsif ($use_anyevent_xspromises) {
+        require AnyEvent::XSPromises;
+        AnyEvent::XSPromises->import();
+        $deferred = AnyEvent::XSPromises::deferred();
+        $query = bless $deferred->promise(), 'DNS::Unbound::AsyncQuery';
+    }
+    else {
+        $query = DNS::Unbound::AsyncQuery->new( sub {
+            ($res, $rej) = @_;
+        } );
+    }
 
     # This hash maintains the query state across all related promise objects.
     # It must NOT contain $self, or else we’ll have a circular reference
     # that will prevent this class’s DESTROY method from firing.
     my %dns = (
+        deferred => $deferred,
         res => $res,
         rej => $rej,
         ctx => $ctx,
@@ -492,19 +510,26 @@ sub _check_promises {
                 delete $asyncs_hr->{ $dns_hr->{'id'} };
                 delete $self->{'_queries_lookup'}{ $dns_hr->{'id'} };
 
-                my $key;
+                my ($succeeded, $settlement);
 
                 if ( ref $dns_hr->{'value'} ) {
-                    $key = 'res';
-                    $dns_hr->{'value'} = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
+                    $succeeded = 1;
+                    $settlement = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
                 }
                 else {
-                    $key = 'rej';
-
-                    $dns_hr->{'value'} = _create_resolve_error($dns_hr->{'value'});
+                    $settlement = _create_resolve_error($dns_hr->{'value'});
                 }
 
-                $dns_hr->{$key}->($dns_hr->{'value'});
+                # Promise::XS
+                if (my $deferred = $dns_hr->{'deferred'}) {
+                    my $fn = $succeeded ? 'resolve' : 'reject';
+                    $deferred->$fn($settlement);
+                }
+
+                # Promise::ES6
+                else {
+                    $dns_hr->{$succeeded ? 'res' : 'rej'}->($settlement);
+                }
             }
         }
     }

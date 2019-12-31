@@ -8,6 +8,9 @@ use Net::DNS::Packet;
 
 use AnyEvent;
 
+$ENV{'DNS_UNBOUND_USE_PROMISE_XS'} = 1;
+use blib '/Users/felipe/code/p5-Promise-XS';
+
 my $dns = DNS::Unbound->new();
 
 my $watch = AnyEvent->io(
