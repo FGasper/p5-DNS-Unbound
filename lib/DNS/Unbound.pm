@@ -485,7 +485,8 @@ sub count_pending_queries {
 
 =head1 METHODS FOR DEALING WITH DNSSEC
 
-The following correspond to their equivalents in libunbound.
+The following correspond to their equivalents in libunbound
+and will only work if the underlying libunbound version supports them.
 
 =head2 I<OBJ>->add_ta()
 

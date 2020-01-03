@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-SV * _ub_result_to_svhv_and_free (struct ub_result* result) {
+SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     SV *val;
 
     AV *data = newAV();
@@ -52,8 +52,13 @@ SV * _ub_result_to_svhv_and_free (struct ub_result* result) {
     val = newSViv(result->bogus);
     hv_stores(rh, "bogus", val);
 
-    val = newSVpv(result->why_bogus, 0);
-    hv_stores(rh, "why_bogus", val);
+    hv_stores(rh, "why_bogus",
+#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4
+        newSVpv(result->why_bogus, 0)
+#else
+        PL_sv_undef
+#endif
+    );
 
     val = newSViv(result->ttl);
     hv_stores(rh, "ttl", val);
@@ -142,7 +147,7 @@ _ub_ctx_debugout( struct ub_ctx *ctx, int fd, const char *mode )
 
         ub_ctx_debugout( ctx, fstream );
 
-const char *
+const char*
 _get_fd_mode_for_fdopen(int fd)
     CODE:
         int flags = fcntl( fd, F_GETFL );
@@ -158,7 +163,7 @@ _get_fd_mode_for_fdopen(int fd)
         RETVAL
 
 
-SV *
+SV*
 _ub_ctx_get_option( struct ub_ctx *ctx, const char* opt)
     CODE:
         char *str;
@@ -188,12 +193,15 @@ _ub_ctx_add_ta( struct ub_ctx *ctx, char *ta )
     OUTPUT:
         RETVAL
 
+#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 5
 int
 _ub_ctx_add_ta_autr( struct ub_ctx *ctx, char *fname )
     CODE:
         RETVAL = ub_ctx_add_ta_autr( ctx, fname );
     OUTPUT:
         RETVAL
+
+#endif
 
 int
 _ub_ctx_add_ta_file( struct ub_ctx *ctx, char *fname )
@@ -244,12 +252,15 @@ _ub_process( struct ub_ctx *ctx )
     OUTPUT:
         RETVAL
 
+#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 3
 int
 _ub_cancel( struct ub_ctx *ctx, int async_id )
     CODE:
         RETVAL = ub_cancel(ctx, async_id);
     OUTPUT:
         RETVAL
+
+#endif
 
 int
 _ub_fd( struct ub_ctx *ctx )
@@ -258,7 +269,7 @@ _ub_fd( struct ub_ctx *ctx )
     OUTPUT:
         RETVAL
 
-SV *
+SV*
 _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, SV *result )
     CODE:
         int async_id = 0;
@@ -285,7 +296,7 @@ _resolve_async( struct ub_ctx *ctx, const char *name, int type, int class, SV *r
     OUTPUT:
         RETVAL
 
-SV *
+SV*
 _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
     CODE:
         struct ub_result* result;
@@ -304,9 +315,12 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
     OUTPUT:
         RETVAL
 
+#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO >= 15
 BOOT:
     HV *stash = gv_stashpvn("DNS::Unbound", 12, FALSE);
     newCONSTSUB(stash, "unbound_version", newSVpv( ub_version(), 0 ));
+
+#endif
 
 void
 _destroy_context( struct ub_ctx *ctx )

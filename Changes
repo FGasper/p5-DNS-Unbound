@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.16
+- Allow use with old libunbound versions.
+
 0.15 Thu, 2 Jan 2020
 - Add DNSSEC setup (i.e., trust anchor) methods.
 
