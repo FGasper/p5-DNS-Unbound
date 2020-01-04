@@ -19,7 +19,7 @@ perl:
 before_install:
     - eval $(curl https://travis-perl.github.io/init) --auto
     - "sudo apt-get install libunbound-dev"
-    - cpanm --notest AnyEvent AnyEvent::XSPromises Promise::XS
+    - cpanm --notest --verbose AnyEvent AnyEvent::XSPromises Promise::XS
     - cpanm --notest ExtUtils::MakeMaker
 install:
     - cpanm --verbose --installdeps --notest .
