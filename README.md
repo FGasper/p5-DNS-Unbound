@@ -144,7 +144,8 @@ Returns the number of outstanding asynchronous queries.
 
 # METHODS FOR DEALING WITH DNSSEC
 
-The following correspond to their equivalents in libunbound.
+The following correspond to their equivalents in libunbound
+and will only work if the underlying libunbound version supports them.
 
 ## _OBJ_->add\_ta()
 
