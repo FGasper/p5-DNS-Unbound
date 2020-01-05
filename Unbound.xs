@@ -56,7 +56,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 #if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4
         newSVpv(result->why_bogus, 0)
 #else
-        PL_sv_undef
+        &PL_sv_undef
 #endif
     );
 
