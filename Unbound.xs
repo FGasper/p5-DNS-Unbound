@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
-// Trickery ...
+// Perl does define a STRINGIFY macro that does the same thing,
+// but that may or may not be intended for public use. So:
 #define MY_STRINGIFY_BACKEND(s) #s
 #define MY_STRINGIFY(s) MY_STRINGIFY_BACKEND(s)
 
