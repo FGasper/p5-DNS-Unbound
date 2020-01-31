@@ -63,10 +63,15 @@ use XSLoader ();
 use DNS::Unbound::Result ();
 use DNS::Unbound::X ();
 
+# Load the default async query implementation.
+# This may change when non-default implementations
+# leave experimental status.
+use DNS::Unbound::AsyncQuery::PromiseES6 ();
+
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.17_01';
+    $VERSION = '0.17';
     XSLoader::load();
 }
 
