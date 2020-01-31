@@ -5,6 +5,8 @@ use warnings;
 
 use Test::More;
 
+use Test::DescribeMe 'author';
+
 use Net::DNS::Nameserver;
 use Net::DNS::RR;
 

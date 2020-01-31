@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.18 Fri, 31 Jan 2020
+- Skip unreliable resolvconf test when installing the module.
+
 0.17 Fri, 31 Jan 2020
 - BREAKING CHANGE: DNSSEC functions (introduced in 0.15) now throw errors and
   return $self.
