@@ -1,5 +1,8 @@
 Revision history for Perl module DNS::Unbound
 
+0.19
+- Switch mechanisms for detecting the active libunbound version.
+
 0.18 Fri, 31 Jan 2020
 - Skip unreliable resolvconf test when installing the module.
 

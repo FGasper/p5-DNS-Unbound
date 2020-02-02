@@ -12,7 +12,14 @@
 #define MY_STRINGIFY_BACKEND(s) #s
 #define MY_STRINGIFY(s) MY_STRINGIFY_BACKEND(s)
 
-#define BUILT_UNBOUND_VERSION MY_STRINGIFY(UNBOUND_VERSION_MAJOR) "." MY_STRINGIFY(UNBOUND_VERSION_MINOR) "." MY_STRINGIFY(UNBOUND_VERSION_MICRO)
+// In some libunbound releases (1.6.8?) it appears that
+// macros like UNBOUND_VERSION_MAJOR are, e.g., "@UNBOUND_VERSION_MAJOR@".
+// The LIBUNBOUND_* macros appear to be more reliable.
+#define DUB_LIBUNBOUND_MAJOR LIBUNBOUND_AGE
+#define DUB_LIBUNBOUND_MINOR LIBUNBOUND_CURRENT
+#define DUB_LIBUNBOUND_MICRO LIBUNBOUND_REVISION
+
+#define BUILT_LIBUNBOUND_VERSION MY_STRINGIFY(DUB_LIBUNBOUND_MAJOR) "." MY_STRINGIFY(DUB_LIBUNBOUND_MINOR) "." MY_STRINGIFY(DUB_LIBUNBOUND_MICRO)
 
 SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     SV *val;
@@ -60,7 +67,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     hv_stores(rh, "bogus", val);
 
     hv_stores(rh, "why_bogus",
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4
+#if DUB_LIBUNBOUND_MAJOR > 1 || DUB_LIBUNBOUND_MINOR > 4
         newSVpv(result->why_bogus, 0)
 #else
         &PL_sv_undef
@@ -200,7 +207,7 @@ _ub_ctx_add_ta( struct ub_ctx *ctx, char *ta )
     OUTPUT:
         RETVAL
 
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 5
+#if DUB_LIBUNBOUND_MAJOR > 1 || DUB_LIBUNBOUND_MINOR > 5
 int
 _ub_ctx_add_ta_autr( struct ub_ctx *ctx, char *fname )
     CODE:
@@ -277,7 +284,7 @@ _ub_process( struct ub_ctx *ctx )
     OUTPUT:
         RETVAL
 
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 3
+#if DUB_LIBUNBOUND_MAJOR > 1 || DUB_LIBUNBOUND_MINOR > 3
 int
 _ub_cancel( struct ub_ctx *ctx, int async_id )
     CODE:
@@ -342,10 +349,10 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
 
 BOOT:
     HV *stash = gv_stashpvn("DNS::Unbound", 12, FALSE);
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO >= 15
+#if DUB_LIBUNBOUND_MAJOR > 1 || DUB_LIBUNBOUND_MINOR > 4 || DUB_LIBUNBOUND_MICRO >= 15
     newCONSTSUB(stash, "unbound_version", newSVpv( ub_version(), 0 ));
 #else
-    newCONSTSUB(stash, "unbound_version", newSVpv( BUILT_UNBOUND_VERSION, 0 ));
+    newCONSTSUB(stash, "unbound_version", newSVpv( BUILT_LIBUNBOUND_VERSION, 0 ));
 #endif
 
 void
