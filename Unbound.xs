@@ -74,8 +74,13 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 #endif
     );
 
-    val = newSViv(result->ttl);
-    hv_stores(rh, "ttl", val);
+    hv_stores(rh, "ttl",
+#if DUB_LIBUNBOUND_MAJOR > 1 || DUB_LIBUNBOUND_MINOR > 4 || DUB_LIBUNBOUND_MICRO > 19
+        newSViv(result->ttl)
+#else
+        &PL_sv_undef
+    );
+#endif
 
     val = newSVpvn(result->answer_packet, result->answer_len);
     hv_stores(rh, "answer_packet", val);
