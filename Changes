@@ -1,7 +1,6 @@
 Revision history for Perl module DNS::Unbound
 
 0.19
-- Switch mechanisms for detecting the active libunbound version.
 - Fix compatibility with pre-1.4.20 libunbounds, which didn’t include ub_result.ttl.
 
 0.18 Fri, 31 Jan 2020
