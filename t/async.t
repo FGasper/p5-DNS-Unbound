@@ -10,6 +10,9 @@ use_ok('DNS::Unbound');
 
 diag( "libunbound " . DNS::Unbound::unbound_version() );
 
+use Data::Dumper;
+$Data::Dumper::Useqq = 1;
+
 for my $use_threads_yn ( 0, 1 ) {
     my $dns = DNS::Unbound->new();
 

@@ -3,6 +3,7 @@ Revision history for Perl module DNS::Unbound
 0.19
 - Fix compatibility with pre-1.4.20 libunbounds, which didn’t include ub_result.ttl.
 - Fail Makefile.PL on systems where libunbound is unavailable.
+- Make tests output UTF-8.
 - Fix a couple test warnings on old perls.
 
 0.18 Fri, 31 Jan 2020
