@@ -34,9 +34,12 @@ else {
 # In case pkg-config didn’t give us anything.
 if (!$ldflags) {
     warn "I didn’t find libunbound via pkg-config. :(\n";
-    warn "Now I’ll for libunbound via ExtUtils::Liblist …\n";
+    warn "Now I’ll look for libunbound via ExtUtils::Liblist …\n";
 
     my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound');
+
+use Data::Dumper;
+print Dumper($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar);
 
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
@@ -57,9 +60,10 @@ if (!$ldflags) {
         my $cmd = "$ccpath $cflags -xc -lunbound $tpath";
         print "Trying: `$cmd`\n";
 
-        my $out = `$ccpath $cflags -xc -lunbound $tpath`;
+        my $out = `$cmd`;
         if ($?) {
-            die "Failed to find libunbound (CHILD_ERROR=$?): $out";
+            #die "Failed to find libunbound (CHILD_ERROR=$?): $out";
+            warn "Failed to find libunbound (CHILD_ERROR=$?): $out";
         }
         else {
             print "Whew! libunbound compiles! Now let’s get on with things …\n";

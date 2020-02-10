@@ -12,6 +12,11 @@
 #define MY_STRINGIFY_BACKEND(s) #s
 #define MY_STRINGIFY(s) MY_STRINGIFY_BACKEND(s)
 
+#define HAS_WHY_BOGUS           (UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4)
+#define HAS_TTL                 (UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO > 19)
+#define HAS_UB_CTX_ADD_TA_AUTR  (UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 5)
+#define HAS_UB_VERSION          (UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO >= 15)
+
 #define BUILT_UNBOUND_VERSION MY_STRINGIFY(UNBOUND_VERSION_MAJOR) "." MY_STRINGIFY(UNBOUND_VERSION_MINOR) "." MY_STRINGIFY(UNBOUND_VERSION_MICRO)
 
 SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
@@ -60,7 +65,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     hv_stores(rh, "bogus", val);
 
     hv_stores(rh, "why_bogus",
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4
+#if HAS_WHY_BOGUS
         newSVpv(result->why_bogus, 0)
 #else
         &PL_sv_undef
@@ -68,7 +73,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     );
 
     hv_stores(rh, "ttl",
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO > 19
+#if HAS_TTL
         newSViv(result->ttl)
 #else
         &PL_sv_undef
@@ -205,7 +210,7 @@ _ub_ctx_add_ta( struct ub_ctx *ctx, char *ta )
     OUTPUT:
         RETVAL
 
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 5
+#if HAS_UB_CTX_ADD_TA_AUTR
 int
 _ub_ctx_add_ta_autr( struct ub_ctx *ctx, char *fname )
     CODE:
@@ -347,7 +352,7 @@ _resolve( struct ub_ctx *ctx, SV *name, int type, int class = 1 )
 
 BOOT:
     HV *stash = gv_stashpvn("DNS::Unbound", 12, FALSE);
-#if UNBOUND_VERSION_MAJOR > 1 || UNBOUND_VERSION_MINOR > 4 || UNBOUND_VERSION_MICRO >= 15
+#if HAS_UB_VERSION
     newCONSTSUB(stash, "unbound_version", newSVpv( ub_version(), 0 ));
 #else
     newCONSTSUB(stash, "unbound_version", newSVpv( BUILT_UNBOUND_VERSION, 0 ));
