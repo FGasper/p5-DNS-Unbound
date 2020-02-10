@@ -13,6 +13,8 @@ $ENV{'DNS_UNBOUND_PROMISE_ENGINE'} = 'Promise::XS';
 
 use_ok('DNS::Unbound');
 
+diag( "libunbound " . DNS::Unbound::unbound_version() );
+
 for my $use_threads_yn ( 0, 1 ) {
     my $dns = DNS::Unbound->new();
 
@@ -37,7 +39,7 @@ for my $use_threads_yn ( 0, 1 ) {
 
         my $fd = $dns->fd();
 
-        vec( my $rin, $fd, 1 ) = 1;
+        vec( my $rin = q<>, $fd, 1 ) = 1;
         select( my $rout = $rin, undef, undef, undef );
 
         diag "Ready vvvvvvvvvvvvv";
