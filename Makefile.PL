@@ -36,10 +36,7 @@ if (!$ldflags) {
     warn "I didn’t find libunbound via pkg-config. :(\n";
     warn "Now I’ll look for libunbound via ExtUtils::Liblist …\n";
 
-    my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound');
-
-use Data::Dumper;
-print Dumper($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar);
+    my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound', 0, 1);
 
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
