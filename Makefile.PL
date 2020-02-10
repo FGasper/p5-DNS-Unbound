@@ -42,7 +42,7 @@ if (!$ldflags) {
         print "Libunbound found at: @$where_ar\n";
     }
     else {
-        warn "That didn’t work, either. This isn’t looking good. :-/\n";
+        warn "That didn’t work, either. This doesn’t look good. :-/\n";
         warn "As a last resort, let’s just try compiling with libunbound …\n";
 
         use Config;
@@ -59,11 +59,12 @@ if (!$ldflags) {
 
         my $out = `$cmd`;
         if ($?) {
-            #die "Failed to find libunbound (CHILD_ERROR=$?): $out";
-            warn "Failed to find libunbound (CHILD_ERROR=$?): $out";
+            die "$ccpath failed to use libunbound (CHILD_ERROR=$?): $out";
         }
         else {
-            print "Whew! libunbound compiles! Now let’s get on with things …\n";
+            print "Huh, weird … the compiler can use and link libunbound.\n";
+            print "Maybe there’s a bug in ExtUtils::Liblist?\n";
+            print "Anyway, let’s get on with our business …\n";
         }
     }
 
