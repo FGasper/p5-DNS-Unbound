@@ -31,21 +31,24 @@ if (!$ldflags) {
 
     use Config;
     my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
+    print "Your C compiler appears to be: $ccpath\n";
 
     use File::Temp;
     my ($tfh, $tpath) = File::Temp::tempfile( CLEANUP => 1 );
     print {$tfh} "#include <unbound.h>\nint main() { return 0; }\n";
     close $tfh;
 
-    my $out = `$ccpath $cflags -xc -lunbound $tpath`;
-    if ($?) {
-        die "Failed to find libunbound: $out";
-    }
-    else {
-        print "Good news: I found your libunbound!\n";
+    print "Trying: `$ccpath $cflags -xc -lunbound $tpath`\n";
+
+#    my $out = `$ccpath $cflags -xc -lunbound $tpath`;
+#    if ($?) {
+#        die "Failed to find libunbound: $out";
+#    }
+#    else {
+#        print "Good news: I found your libunbound!\n";
 
         $ldflags ||= '-lunbound';
-    }
+#    }
 }
 
 print "CFLAGS: [$cflags]\n";
