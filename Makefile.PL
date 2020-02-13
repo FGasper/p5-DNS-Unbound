@@ -18,6 +18,9 @@ int main() {
 }
 END
 
+my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
+print "Your C compiler appears to be: $ccpath\n";
+
 if ( eval { require ExtUtils::PkgConfig } ) {
     print "Oh good! You have ExtUtils::PkgConfig. :)\n";
 
@@ -62,9 +65,6 @@ if (!$ldflags) {
         warn "That didn’t work, either. This doesn’t look good. :-/\n";
         warn "As a last resort, let’s just try compiling with libunbound …\n";
 
-        my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
-        print "Your C compiler appears to be: $ccpath\n";
-
         my ($tfh, $tpath) = File::Temp::tempfile( CLEANUP => 1 );
         print {$tfh} "#include <unbound.h>\nint main() { return 0; }\n";
         close $tfh;
@@ -92,9 +92,6 @@ print "LDFLAGS: [$ldflags]\n";
 my @UB_VERSION;
 
 {
-    my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
-    print "Your C compiler appears to be: $ccpath\n";
-
     print "Let’s see which libunbound version you have …\n";
 
     my $tdir = File::Temp::tempdir( CLEANUP => 1 );
@@ -102,7 +99,7 @@ my @UB_VERSION;
     print {$wfh} _TEST_C_CODE();
     close $wfh;
 
-    my $cmd = "$ccpath $cflags $ldflags -o $tdir/getversion $tdir/getversion.c";
+    my $cmd = "$ccpath $cflags -o $tdir/getversion $ldflags $tdir/getversion.c";
 
     print "Compiling test program: `$cmd`\n";
     system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
