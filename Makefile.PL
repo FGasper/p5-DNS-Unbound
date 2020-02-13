@@ -4,6 +4,23 @@ my $pkgconfig_name = 'libunbound';
 
 my ($cflags, $ldflags);
 
+use Config;
+use File::Temp;
+
+use constant _TEST_C_CODE => <<END;
+#include <stdio.h>
+#include <unbound.h>
+
+int main() {
+    fprintf(stdout, "%s", ub_version());
+
+    return 0;
+}
+END
+
+my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
+print "Your C compiler appears to be: $ccpath\n";
+
 if ( eval { require ExtUtils::PkgConfig } ) {
     print "Oh good! You have ExtUtils::PkgConfig. :)\n";
 
@@ -42,14 +59,12 @@ if (!$ldflags) {
         print "Libunbound found at: @$where_ar\n";
     }
     else {
+
+        # Useful for Travis CI. Not sure if it’s relevant in production …
+
         warn "That didn’t work, either. This doesn’t look good. :-/\n";
         warn "As a last resort, let’s just try compiling with libunbound …\n";
 
-        use Config;
-        my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
-        print "Your C compiler appears to be: $ccpath\n";
-
-        use File::Temp;
         my ($tfh, $tpath) = File::Temp::tempfile( CLEANUP => 1 );
         print {$tfh} "#include <unbound.h>\nint main() { return 0; }\n";
         close $tfh;
@@ -74,12 +89,45 @@ if (!$ldflags) {
 print "CFLAGS: [$cflags]\n";
 print "LDFLAGS: [$ldflags]\n";
 
+my @UB_VERSION;
+
+{
+    print "Let’s see which libunbound version you have …\n";
+
+    my $tdir = File::Temp::tempdir( CLEANUP => 1 );
+    open my $wfh, '>', "$tdir/getversion.c";
+    print {$wfh} _TEST_C_CODE();
+    close $wfh;
+
+    my $cmd = "$ccpath $cflags -o $tdir/getversion $ldflags $tdir/getversion.c";
+
+    print "Compiling test program: `$cmd`\n";
+    system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
+
+    print "Compilation succeeded! Running compiled test program …\n";
+    my $version = `$tdir/getversion`;
+    die "Test program failed (CHILD_ERROR=$?)" if !$version;
+
+    print "Your libunbound says it’s version “$version”.\n";
+
+    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.[0-9]+)?>);
+    $UB_VERSION[2] ||= 0;
+}
+
 WriteMakefile(
     NAME           => 'DNS::Unbound',
     VERSION_FROM   => 'lib/DNS/Unbound.pm',
     ABSTRACT_FROM  => 'lib/DNS/Unbound.pm',
     AUTHOR         => 'Felipe Gasper (FELIPE)',
-    CCFLAGS        => "$cflags -Wall -std=c99",
+    CCFLAGS        => join(
+        q< >,
+        $cflags,
+        '-Wall',
+        '-std=c99',
+        "-DDUB_UB_VERSION_MAJOR=$UB_VERSION[0]",
+        "-DDUB_UB_VERSION_MINOR=$UB_VERSION[1]",
+        "-DDUB_UB_VERSION_MACRO=$UB_VERSION[2]",
+    ),
     LIBS           => [ $ldflags ],
     LICENSE        => 'perl',
 
