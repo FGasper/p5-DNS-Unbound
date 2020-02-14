@@ -59,7 +59,7 @@ if (!$ldflags) {
 
         my $out = `$cmd`;
         if ($?) {
-            die "$ccpath failed to use libunbound (CHILD_ERROR=$?): $out";
+            warn "$ccpath failed to use libunbound (CHILD_ERROR=$?): $out";
         }
         else {
             print "Huh, weird … the compiler can use and link libunbound.\n";
