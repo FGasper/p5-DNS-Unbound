@@ -54,6 +54,8 @@ if (!$ldflags) {
     warn "Now I’ll look for libunbound via ExtUtils::Liblist …\n";
 
     my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound', 0, 1);
+use Data::Dumper;
+print STDERR Dumper($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar);
 
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
@@ -101,7 +103,7 @@ my @UB_VERSION;
     print {$wfh} _TEST_C_CODE();
     close $wfh;
 
-    my $cmd = "$ccpath $cflags -L/usr/lib/x86_64-linux-gnu $ldflags $tdir/getversion.c -o $tdir/getversion";
+    my $cmd = "$ccpath $cflags $tdir/getversion.c -L/usr/lib/x86_64-linux-gnu $ldflags -o $tdir/getversion";
 
     print "Compiling test program: `$cmd`\n";
     system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
