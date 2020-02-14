@@ -80,7 +80,7 @@ print "LDFLAGS: [$ldflags]\n";
 
 # There has to be something better …
 
-$_ = 0 for my (
+my (
     $HAS_UB_VERSION,
     $HAS_UB_CANCEL,
     $HAS_UB_CTX_ADD_TA_AUTR,
@@ -117,7 +117,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_VERSION ||= shift;
+            $HAS_UB_VERSION = shift;
         },
     },
     {
@@ -132,7 +132,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_TTL ||= shift;
+            $HAS_TTL = shift;
         },
     },
     {
@@ -147,7 +147,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_WHY_BOGUS ||= shift;
+            $HAS_WHY_BOGUS = shift;
         },
     },
     {
@@ -162,7 +162,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_CANCEL ||= shift;
+            $HAS_UB_CANCEL = shift;
         },
     },
     {
@@ -177,7 +177,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_CTX_ADD_TA_AUTR ||= shift;
+            $HAS_UB_CTX_ADD_TA_AUTR = shift;
         },
     },
 );
@@ -197,7 +197,7 @@ for my $check (@checks) {
     # print "Compiling test program: `$cmd`\n";
     system($cmd);
 
-    my $success = !$? && -s "$tdir/check" && 1;
+    my $success = -s "$tdir/check" ? 1 : 0;
     printf "\t$check->{label}: %s$/", ($success ? 'yes' : 'no');
 
     $check->{'perl'}->($success);
