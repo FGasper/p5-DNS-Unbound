@@ -58,7 +58,7 @@ if (!$ldflags) {
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
 print `ls -la @$where_ar`;
-print `nm @$where_ar`;
+print `nm -D @$where_ar`;
     }
     else {
 
