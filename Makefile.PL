@@ -55,10 +55,6 @@ if (!$ldflags) {
 
     my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound', 0, 1);
 
-use Data::Dumper;
-print STDERR Dumper($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar );
-print STDERR `ls -la /usr/lib/x86_64-linux-gnu/libunb*`;
-
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
     }
