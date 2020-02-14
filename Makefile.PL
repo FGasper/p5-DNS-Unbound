@@ -117,7 +117,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_VERSION = 1;
+            $HAS_UB_VERSION ||= shift;
         },
     },
     {
@@ -132,7 +132,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_TTL = shift;
+            $HAS_TTL ||= shift;
         },
     },
     {
@@ -147,7 +147,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_WHY_BOGUS = shift;
+            $HAS_WHY_BOGUS ||= shift;
         },
     },
     {
@@ -162,7 +162,7 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_CANCEL = shift;
+            $HAS_UB_CANCEL ||= shift;
         },
     },
     {
@@ -177,13 +177,13 @@ my @checks = (
             '}',
         ),
         perl => sub {
-            $HAS_UB_CTX_ADD_TA_AUTR = shift;
+            $HAS_UB_CTX_ADD_TA_AUTR ||= shift;
         },
     },
 );
 
 for my $check (@checks) {
-    print "Checking: $check->{label} …";
+    print "Checking: $check->{label} … $/";
 
     my $tdir = File::Temp::tempdir( CLEANUP => 1 );
     open my $wfh, '>', "$tdir/check.c";
@@ -198,7 +198,7 @@ for my $check (@checks) {
     system($cmd);
 
     my $success = !$? && -s "$tdir/check" && 1;
-    printf " %s$/", ($success ? 'yes' : 'no');
+    printf "\t$check->{label}: %s$/", ($success ? 'yes' : 'no');
 
     $check->{'perl'}->($success);
 }
