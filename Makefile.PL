@@ -74,7 +74,7 @@ if (!$ldflags) {
 
         my $out = `$cmd`;
         if ($?) {
-            warn "$ccpath failed to use libunbound (CHILD_ERROR=$?): $out";
+            die "$ccpath failed to use libunbound (CHILD_ERROR=$?): $out";
         }
         else {
             print "Huh, weird … the compiler can use and link libunbound.\n";
@@ -99,7 +99,7 @@ my @UB_VERSION;
     print {$wfh} _TEST_C_CODE();
     close $wfh;
 
-    my $cmd = "$ccpath $cflags -o $tdir/getversion $ldflags $tdir/getversion.c";
+    my $cmd = "$ccpath $cflags -L/usr/lib/x86_64-linux-gnu $ldflags $tdir/getversion.c -o $tdir/getversion";
 
     print "Compiling test program: `$cmd`\n";
     system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
@@ -110,7 +110,7 @@ my @UB_VERSION;
 
     print "Your libunbound says it’s version “$version”.\n";
 
-    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.[0-9]+)?>);
+    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.([0-9]+))?>);
     $UB_VERSION[2] ||= 0;
 }
 
@@ -126,7 +126,7 @@ WriteMakefile(
         '-std=c99',
         "-DDUB_UB_VERSION_MAJOR=$UB_VERSION[0]",
         "-DDUB_UB_VERSION_MINOR=$UB_VERSION[1]",
-        "-DDUB_UB_VERSION_MACRO=$UB_VERSION[2]",
+        "-DDUB_UB_VERSION_MICRO=$UB_VERSION[2]",
     ),
     LIBS           => [ $ldflags ],
     LICENSE        => 'perl',
