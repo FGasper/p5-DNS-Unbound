@@ -22,7 +22,7 @@ before_install:
     - "apt show libunbound-dev"
     - "sudo apt-get install libunbound-dev"
     - "dpkg -L libunbound-dev"
-    - "echo | gcc -E -Wp,-v -"
+    - "echo | cc -E -Wp,-v -"
     - eval $(curl https://travis-perl.github.io/init) --auto
     - "[ $TRAVIS_PERL_VERSION != '5.14' ] && [ $TRAVIS_PERL_VERSION != '5.12' ] && [ $TRAVIS_PERL_VERSION != '5.10' ] && cpanm --notest --verbose AnyEvent AnyEvent::XSPromises ||:"
     - cpanm --notest --verbose Promise::XS
