@@ -7,19 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// Perl does define a STRINGIFY macro that does the same thing,
-// but that may or may not be intended for public use. So:
-#define MY_STRINGIFY_BACKEND(s) #s
-#define MY_STRINGIFY(s) MY_STRINGIFY_BACKEND(s)
-
-#define HAS_WHY_BOGUS           (DUB_UB_VERSION_MAJOR > 1 || DUB_UB_VERSION_MINOR > 4)
-#define HAS_TTL                 (DUB_UB_VERSION_MAJOR > 1 || DUB_UB_VERSION_MINOR > 4 || DUB_UB_VERSION_MICRO > 19)
-#define HAS_UB_CANCEL           (DUB_UB_VERSION_MAJOR > 1 || DUB_UB_VERSION_MINOR > 3)
-#define HAS_UB_CTX_ADD_TA_AUTR  (DUB_UB_VERSION_MAJOR > 1 || DUB_UB_VERSION_MINOR > 5)
-#define HAS_UB_VERSION          (DUB_UB_VERSION_MAJOR > 1 || DUB_UB_VERSION_MINOR > 4 || DUB_UB_VERSION_MICRO >= 15)
-
-#define BUILT_UNBOUND_VERSION MY_STRINGIFY(DUB_UB_VERSION_MAJOR) "." MY_STRINGIFY(DUB_UB_VERSION_MINOR) "." MY_STRINGIFY(DUB_UB_VERSION_MICRO)
-
 SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     SV *val;
 
@@ -355,8 +342,6 @@ BOOT:
     HV *stash = gv_stashpvn("DNS::Unbound", 12, FALSE);
 #if HAS_UB_VERSION
     newCONSTSUB(stash, "unbound_version", newSVpv( ub_version(), 0 ));
-#else
-    newCONSTSUB(stash, "unbound_version", newSVpv( BUILT_UNBOUND_VERSION, 0 ));
 #endif
 
 void

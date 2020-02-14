@@ -7,17 +7,6 @@ my ($cflags, $ldflags);
 use Config;
 use File::Temp;
 
-use constant _TEST_C_CODE => <<END;
-#include <stdio.h>
-#include <unbound.h>
-
-int main() {
-    fprintf(stdout, "%s", ub_version());
-
-    return 0;
-}
-END
-
 my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
 print "Your C compiler appears to be: $ccpath\n";
 
@@ -89,31 +78,129 @@ if (!$ldflags) {
 print "CFLAGS: [$cflags]\n";
 print "LDFLAGS: [$ldflags]\n";
 
-my @UB_VERSION;
+# There has to be something better …
 
-{
-    print "Let’s see which libunbound version you have …\n";
+$_ = 0 for my (
+    $HAS_UB_VERSION,
+    $HAS_UB_CANCEL,
+    $HAS_UB_CTX_ADD_TA_AUTR,
+    $HAS_WHY_BOGUS,
+    $HAS_TTL,
+);
+
+my @checks = (
+    {
+        label => 'sanity',
+        c => join(
+            $/,
+            '#include <unbound.h>',
+            'int main() {',
+            '   struct ub_result myresult;',
+            '   return 0;',
+            '}',
+        ),
+        perl => sub {
+            if (!shift) {
+                die "libunbound didn’t compile! (CHILD_ERROR=$?)";
+            }
+        },
+    },
+    {
+        label => 'ub_version()',
+        c => join(
+            $/,
+            '#include <stdio.h>',
+            '#include <unbound.h>',
+            'int main() {',
+            '    fprintf(stdout, "%s", ub_version());',
+            '    return 0;',
+            '}',
+        ),
+        perl => sub {
+            $HAS_UB_VERSION = 1;
+        },
+    },
+    {
+        label => 'ub_result.ttl',
+        c => join(
+            $/,
+            '#include <unbound.h>',
+            'int main() {',
+            '   struct ub_result myresult;',
+            '   myresult.ttl = 123;',
+            '   return 0;',
+            '}',
+        ),
+        perl => sub {
+            $HAS_TTL = shift;
+        },
+    },
+    {
+        label => 'ub_result.why_bogus',
+        c => join(
+            $/,
+            '#include <unbound.h>',
+            'int main() {',
+            '   struct ub_result myresult;',
+            '   myresult.why_bogus = "123";',
+            '   return 0;',
+            '}',
+        ),
+        perl => sub {
+            $HAS_WHY_BOGUS = shift;
+        },
+    },
+    {
+        label => 'ub_cancel()',
+        c => join(
+            $/,
+            '#include <unbound.h>',
+            'int main() {',
+            '   struct ub_ctx* myctx;',
+            '   ub_cancel(myctx, 0);',
+            '   return 0;',
+            '}',
+        ),
+        perl => sub {
+            $HAS_UB_CANCEL = shift;
+        },
+    },
+    {
+        label => 'ub_ctx_add_ta_autr()',
+        c => join(
+            $/,
+            '#include <unbound.h>',
+            'int main() {',
+            '   struct ub_ctx* myctx;',
+            '   ub_ctx_add_ta_autr(myctx, "/faux");',
+            '   return 0;',
+            '}',
+        ),
+        perl => sub {
+            $HAS_UB_CTX_ADD_TA_AUTR = shift;
+        },
+    },
+);
+
+for my $check (@checks) {
+    print "Checking: $check->{label} …";
 
     my $tdir = File::Temp::tempdir( CLEANUP => 1 );
-    open my $wfh, '>', "$tdir/getversion.c";
-    print {$wfh} _TEST_C_CODE();
+    open my $wfh, '>', "$tdir/check.c";
+    print {$wfh} $check->{c};
     close $wfh;
 
     # Some compilers care about order here:
     #   compile flags, compile source, linker flags, then linker source.
-    my $cmd = "$ccpath $cflags $tdir/getversion.c $ldflags -o $tdir/getversion";
+    my $cmd = "$ccpath $cflags $tdir/check.c $ldflags -o $tdir/check";
 
-    print "Compiling test program: `$cmd`\n";
-    system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
+    # print "Compiling test program: `$cmd`\n";
+    system($cmd);
 
-    print "Compilation succeeded! Running compiled test program …\n";
-    my $version = `$tdir/getversion`;
-    die "Test program failed (CHILD_ERROR=$?)" if !$version;
+    my $success = !$? && -s "$tdir/check" && 1;
+    printf " %s$/", ($success ? 'yes' : 'no');
 
-    print "Your libunbound says it’s version “$version”.\n";
-
-    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.([0-9]+))?>);
-    $UB_VERSION[2] ||= 0;
+    $check->{'perl'}->($success);
 }
 
 WriteMakefile(
@@ -126,9 +213,11 @@ WriteMakefile(
         $cflags,
         '-Wall',
         '-std=c99',
-        "-DDUB_UB_VERSION_MAJOR=$UB_VERSION[0]",
-        "-DDUB_UB_VERSION_MINOR=$UB_VERSION[1]",
-        "-DDUB_UB_VERSION_MICRO=$UB_VERSION[2]",
+        "-DHAS_UB_VERSION=$HAS_UB_VERSION",
+        "-DHAS_UB_CANCEL=$HAS_UB_CANCEL",
+        "-DHAS_UB_CTX_ADD_TA_AUTR=$HAS_UB_CTX_ADD_TA_AUTR",
+        "-DHAS_WHY_BOGUS=$HAS_WHY_BOGUS",
+        "-DHAS_TTL=$HAS_TTL",
     ),
     LIBS           => [ $ldflags ],
     LICENSE        => 'perl',
