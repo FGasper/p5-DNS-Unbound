@@ -17,6 +17,7 @@ perl:
 #  - "5.8"
 #  - "5.6"
 before_install:
+    - "dpkg -s libunbound-dev"
     - "sudo apt-get install libunbound-dev"
     - "dpkg -L libunbound-dev"
     - eval $(curl https://travis-perl.github.io/init) --auto
