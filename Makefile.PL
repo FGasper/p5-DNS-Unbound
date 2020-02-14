@@ -54,6 +54,8 @@ if (!$ldflags) {
     warn "Now I’ll look for libunbound via ExtUtils::Liblist …\n";
 
     my ($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar) = ExtUtils::Liblist->ext('-lunbound', 0, 1);
+use Data::Dumper;
+print STDERR Dumper($xtralibs, $bsloadlibs, $ldloadlibs, $ld_run_path, $where_ar )
 
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
@@ -91,28 +93,30 @@ print "LDFLAGS: [$ldflags]\n";
 
 my @UB_VERSION;
 
-{
-    print "Let’s see which libunbound version you have …\n";
+#{
+#    print "Let’s see which libunbound version you have …\n";
+#
+#    my $tdir = File::Temp::tempdir( CLEANUP => 1 );
+#    open my $wfh, '>', "$tdir/getversion.c";
+#    print {$wfh} _TEST_C_CODE();
+#    close $wfh;
+#
+#    my $cmd = "$ccpath $cflags -o $tdir/getversion $ldflags $tdir/getversion.c";
+#
+#    print "Compiling test program: `$cmd`\n";
+#    system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
+#
+#    print "Compilation succeeded! Running compiled test program …\n";
+#    my $version = `$tdir/getversion`;
+#    die "Test program failed (CHILD_ERROR=$?)" if !$version;
+#
+#    print "Your libunbound says it’s version “$version”.\n";
+#
+#    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.[0-9]+)?>);
+#    $UB_VERSION[2] ||= 0;
+#}
 
-    my $tdir = File::Temp::tempdir( CLEANUP => 1 );
-    open my $wfh, '>', "$tdir/getversion.c";
-    print {$wfh} _TEST_C_CODE();
-    close $wfh;
-
-    my $cmd = "$ccpath $cflags -o $tdir/getversion $ldflags $tdir/getversion.c";
-
-    print "Compiling test program: `$cmd`\n";
-    system($cmd) and die "Compilation failed (CHILD_ERROR=$?)";
-
-    print "Compilation succeeded! Running compiled test program …\n";
-    my $version = `$tdir/getversion`;
-    die "Test program failed (CHILD_ERROR=$?)" if !$version;
-
-    print "Your libunbound says it’s version “$version”.\n";
-
-    @UB_VERSION = ($version =~ m<([0-9]+)\.([0-9]+)(?:\.[0-9]+)?>);
-    $UB_VERSION[2] ||= 0;
-}
+@UB_VERSION = qw( 1 4 20 );
 
 WriteMakefile(
     NAME           => 'DNS::Unbound',
