@@ -46,6 +46,38 @@ if (!$ldflags) {
 
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
+
+        require File::Spec;
+        my @pieces = File::Spec->splitdir($where_ar->[0]);
+        pop @pieces;
+        my $dir = File::Spec->catdir(@pieces);
+
+        $ldflags = "-L$dir -lunbound";
+
+        if (!$cflags) {
+            print "Looking for unbound.h …$/";
+
+            pop @pieces;
+
+            require Config;
+            my @incdirs = (
+                File::Spec->catdir(@pieces, "include"),
+                ( split m<\s+>, $Config::Config{'locincpath'} ),
+            );
+
+            for my $dir (@incdirs) {
+                print "Checking $dir …$/";
+
+                if (-s File::Spec->catdir($dir, 'unbound.h')) {
+                    print "Found it!$/";
+                    $cflags = "-I$dir";
+                    last;
+                }
+                else {
+                    print "… nope. :($/";
+                }
+            }
+        }
     }
     else {
 
@@ -198,7 +230,7 @@ for my $check (@checks) {
     system($cmd);
 
     my $success = -s "$tdir/check" ? 1 : 0;
-    printf "\t$check->{label}: %s$/", ($success ? 'yes' : 'no');
+    printf "  $check->{label}: %s$/", ($success ? 'yes' : 'no');
 
     $check->{'perl'}->($success);
 }
