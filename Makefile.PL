@@ -77,6 +77,10 @@ if (!$ldflags) {
                     print "… nope. :($/";
                 }
             }
+
+            if (!$cflags) {
+                die "I can’t find unbound.h! (Possible bug?)$/";
+            }
         }
     }
     else {
