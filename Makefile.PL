@@ -6,6 +6,7 @@ my ($cflags, $ldflags);
 
 use Config;
 use File::Temp;
+use File::Spec;
 
 my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
 print "Your C compiler appears to be: $ccpath\n";
@@ -47,7 +48,6 @@ if (!$ldflags) {
     if (@$where_ar) {
         print "Libunbound found at: @$where_ar\n";
 
-        require File::Spec;
         my @pieces = File::Spec->splitdir($where_ar->[0]);
         pop @pieces;
         my $dir = File::Spec->catdir(@pieces);
@@ -57,15 +57,23 @@ if (!$ldflags) {
         if (!$cflags) {
             print "Looking for unbound.h …$/";
 
-            pop @pieces;
-
             require Config;
             my @incdirs = (
-                File::Spec->catdir(@pieces, "include"),
-                ( split m<\s+>, $Config::Config{'locincpath'} ),
+                $Config::Config{'usrinc'},
+                map { split m<\s+> } (
+                    $Config::Config{'incpth'},
+                    $Config::Config{'locincpth'},
+                ),
             );
 
+            while (@pieces > 1) {
+                pop @pieces;
+                push @incdirs, File::Spec->catdir(@pieces, "include"),
+            }
+
             for my $dir (@incdirs) {
+                next if !$dir;
+
                 print "Checking $dir …$/";
 
                 if (-s File::Spec->catdir($dir, 'unbound.h')) {
@@ -222,18 +230,21 @@ for my $check (@checks) {
     print "Checking: $check->{label} … $/";
 
     my $tdir = File::Temp::tempdir( CLEANUP => 1 );
-    open my $wfh, '>', "$tdir/check.c";
+    my $cpath = File::Spec->catdir( $tdir, 'check.c' );
+    my $progpath = File::Spec->catdir( $tdir, 'check' );
+
+    open my $wfh, '>', $cpath;
     print {$wfh} $check->{c};
     close $wfh;
 
     # Some compilers care about order here:
     #   compile flags, compile source, linker flags, then linker source.
-    my $cmd = "$ccpath $cflags $tdir/check.c $ldflags -o $tdir/check";
+    my $cmd = "$ccpath $cflags $cpath $ldflags -o $progpath";
 
     # print "Compiling test program: `$cmd`\n";
     system($cmd);
 
-    my $success = -s "$tdir/check" ? 1 : 0;
+    my $success = -s $progpath ? 1 : 0;
     printf "  $check->{label}: %s$/", ($success ? 'yes' : 'no');
 
     $check->{'perl'}->($success);
