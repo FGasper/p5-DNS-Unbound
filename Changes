@@ -1,9 +1,9 @@
 Revision history for Perl module DNS::Unbound
 
-0.19
-- Fix compatibility with pre-1.4.20 libunbounds, which didn’t include ub_result.ttl.
-- Make the libunbound version detection independent of libunbound’s macros.
-- Fail Makefile.PL on systems where libunbound is unavailable.
+0.19 Tue, 18 Feb 2020
+- Fix compatibility with old libunbounds that didn’t include ub_result.ttl.
+- Forgo version detection in favor of feature detection.
+- Fail Makefile.PL on systems where libunbound or its header is unavailable.
 - Make tests output UTF-8.
 - Fix a couple test warnings on old perls.
 

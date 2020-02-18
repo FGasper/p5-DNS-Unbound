@@ -71,8 +71,13 @@ if (!$ldflags) {
                 push @incdirs, File::Spec->catdir(@pieces, "include"),
             }
 
+            my %checked;
+
             for my $dir (@incdirs) {
                 next if !$dir;
+
+                next if $checked{$dir};
+                $checked{$dir}++;
 
                 print "Checking $dir …$/";
 
