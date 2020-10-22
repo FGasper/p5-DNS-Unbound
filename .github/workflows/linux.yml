@@ -45,7 +45,7 @@ jobs:
       - name: perl -V
         run: perl -V
       - name: Install System Dependencies
-        run: sudo apt install libunbound-dev
+        run: apt install libunbound-dev
       - name: Install Perl Dependencies
         run: cpanm --notest --installdeps .
       - name: perl Makefile.PL
