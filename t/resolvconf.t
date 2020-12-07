@@ -16,6 +16,8 @@ use Socket;
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
 
+diag "Using Net::DNS::Nameserver $Net::DNS::Nameserver::VERSION";
+
 use_ok('DNS::Unbound');
 
 my $ns = eval {
@@ -23,6 +25,7 @@ my $ns = eval {
 
     Net::DNS::Nameserver->new(
         Verbose => 1,
+        LocalPort => 53,
         ReplyHandler => sub {
             my ( $qname, $qclass, $qtype, $peerhost, $query, $conn ) = @_;
 
