@@ -54,6 +54,10 @@ my $ns = eval {
 SKIP: {
     skip "Failed to start nameserver: $@", 1 if !$ns;
 
+use Data::Dumper;
+$Data::Dumper::Useqq = 1;
+print STDERR Dumper $ns;
+
     my $pid;
     $pid = fork or do {
         die "fork(): $!" if !defined $pid;
