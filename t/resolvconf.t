@@ -73,7 +73,7 @@ SKIP: {
         "@{$result->data()}",
         pack( 'C*', 127, 0, 0, 1 ),
         'query returns as expected',
-    );
+    ) or diag Dumper( $result );
 
     kill 'TERM', $pid;
 }
