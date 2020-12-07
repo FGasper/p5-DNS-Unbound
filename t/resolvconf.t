@@ -13,10 +13,7 @@ use Net::DNS::RR;
 use File::Temp;
 use Socket;
 
-use Data::Dumper;
-$Data::Dumper::Useqq = 1;
-
-diag "Using Net::DNS::Nameserver $Net::DNS::Nameserver::VERSION";
+# diag "Using Net::DNS::Nameserver $Net::DNS::Nameserver::VERSION";
 
 use_ok('DNS::Unbound');
 
@@ -56,10 +53,6 @@ my $ns = eval {
 
 SKIP: {
     skip "Failed to start nameserver: $@", 1 if !$ns;
-
-use Data::Dumper;
-$Data::Dumper::Useqq = 1;
-print STDERR Dumper $ns;
 
     my $pid;
     $pid = fork or do {
