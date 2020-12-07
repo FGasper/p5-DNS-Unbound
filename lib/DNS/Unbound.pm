@@ -231,7 +231,7 @@ sub resolve_async {
 
     my ($promise, $res, $rej, $deferred);
 
-    my $query_class = _load_asyncquery_if_needed();
+    my $query_class = $_[0]->_load_asyncquery_if_needed();
 
     if (my $deferred_cr = $query_class->_DEFERRED_CR()) {
         $deferred = $deferred_cr->();
@@ -286,7 +286,7 @@ my $installed_cancel_cr;
 sub _load_asyncquery_if_needed {
 
     # Not documented because it’s not yet meant for public consumption.
-    my $engine = $ENV{'DNS_UNBOUND_PROMISE_ENGINE'} || _DEFAULT_PROMISE_ENGINE();
+    my $engine = $ENV{'DNS_UNBOUND_PROMISE_ENGINE'} || $_[0]->_DEFAULT_PROMISE_ENGINE();
     $engine =~ tr<:><>d;
 
     my $ns = "DNS::Unbound::AsyncQuery::$engine";
