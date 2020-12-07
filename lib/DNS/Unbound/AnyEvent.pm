@@ -3,6 +3,8 @@ package DNS::Unbound::AnyEvent;
 use strict;
 use warnings;
 
+# This class does NOT need to be an FDFHStorer because AnyEvent
+# works with FDs without needing to create Perl filehandles out of them.
 use parent 'DNS::Unbound::EventLoopBase';
 
 use Scalar::Util ();

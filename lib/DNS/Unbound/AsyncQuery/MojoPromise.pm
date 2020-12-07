@@ -10,8 +10,8 @@ use parent (
 
 use constant _DEFERRED_CR => undef;
 
-*_then = \&Mojo::Promise::then;
+*_dns_unbound_then = \&Mojo::Promise::then;
 
-*_finally = \&Mojo::Promise::finally;
+*_dns_unbound_finally = \&Mojo::Promise::finally;
 
 1;

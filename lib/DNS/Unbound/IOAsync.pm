@@ -3,7 +3,10 @@ package DNS::Unbound::IOAsync;
 use strict;
 use warnings;
 
-use parent 'DNS::Unbound::EventLoopBase';
+use parent (
+    'DNS::Unbound::EventLoopBase',
+    'DNS::Unbound::FDFHStorer',
+);
 
 use Scalar::Util ();
 
@@ -11,6 +14,8 @@ use IO::Async::Handle ();
 
 my %INSTANCE_LOOP;
 my %INSTANCE_HANDLE;
+
+# perl -MData::Dumper -MIO::Async::Loop -MDNS::Unbound::IOAsync -e'my $loop = IO::Async::Loop->new(); DNS::Unbound::IOAsync->new($loop)->resolve_async("perl.org", "A")->then( sub { print Dumper shift } )->finally( sub { $loop->stop() } ); $loop->run()'
 
 sub new {
     my ($class, $loop, @args) = @_;
@@ -23,7 +28,7 @@ sub new {
     Scalar::Util::weaken($weak_self);
 
     my $handle = IO::Async::Handle->new(
-        read_fileno => $self->fd(),
+        read_handle => $self->_get_fh(),
         on_read_ready => sub { $weak_self->process() },
     );
     $INSTANCE_HANDLE{$self} = $handle;
@@ -43,4 +48,3 @@ sub DESTROY {
 }
 
 1;
-
