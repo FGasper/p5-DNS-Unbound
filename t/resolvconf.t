@@ -25,6 +25,9 @@ my $ns = eval {
         Verbose => 1,
         ReplyHandler => sub {
             my ( $qname, $qclass, $qtype, $peerhost, $query, $conn ) = @_;
+
+            diag explain [ request => @_ ];
+
             my ( $rcode, @ans, @auth, @add );
 
             if ( $qtype eq "A" && $qname eq "myhost.local" ) {
