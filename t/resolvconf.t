@@ -13,6 +13,9 @@ use Net::DNS::RR;
 use File::Temp;
 use Socket;
 
+use Data::Dumper;
+$Data::Dumper::Useqq = 1;
+
 use_ok('DNS::Unbound');
 
 my $ns = eval {
