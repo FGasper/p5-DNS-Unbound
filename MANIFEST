@@ -26,6 +26,7 @@ lib/DNS/Unbound/X.pm
 lib/DNS/Unbound/X/BadDebugFD.pm
 lib/DNS/Unbound/X/Base.pm
 lib/DNS/Unbound/X/ResolveError.pm
+t/anyevent.t
 t/async.t
 t/async_anyevent_xspromises.t
 t/async_loaded_runtime.t
@@ -37,7 +38,9 @@ t/debugout_badfd.t
 t/debugout_bug.t
 t/destruct.t
 t/hosts.t
+t/ioasync.t
 t/load.t
+t/mojo.t
 t/option.t
 t/resolvconf.t
 typemap

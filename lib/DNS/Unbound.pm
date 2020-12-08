@@ -27,7 +27,10 @@ Synchronous queries:
     # See below about encodings in “data”.
     my @ns = map { $dns->decode_name($_) } @{ $res_hr->data() };
 
-Asynchronous queries use L<the “Promise” pattern|https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises>:
+Asynchronous queries use L<the “Promise” pattern|https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises>. Assuming you’re using
+an off-the-shelf event loop, you can do something like:
+
+    my $dns = DNS::Unbound::AnyEvent->new();
 
     my $query1 = $dns->resolve_async( 'usa.gov', 'A' )->then(
         sub { my $data = shift()->data(); ... },  # success handler
@@ -39,13 +42,7 @@ Asynchronous queries use L<the “Promise” pattern|https://developer.mozilla.o
         sub { ... },
     );
 
-    # As an alternative to wait(), see below for documentation on
-    # the fd(), poll(), and process() methods.
-
-    $dns->wait();
-
-See F<examples/> in the distribution for demonstrations of
-making this module interface with L<AnyEvent> or L<IO::Async>.
+You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 
 =cut
 
@@ -53,6 +50,16 @@ making this module interface with L<AnyEvent> or L<IO::Async>.
 
 This library is a Perl interface to NLNetLabs’s widely-used
 L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver.
+
+=head1 EVENT LOOPS
+
+This distribution includes the classes L<DNS::Unbound::AnyEvent>,
+L<DNS::Unbound::IOAsync>, and L<DNS::Unbound::Mojo>, which provide
+out-of-the-box compatibility with those popular event loop interfaces.
+You should probably use one of these.
+
+You can also integrate with a custom event loop via the C<fd()> method
+of this class.
 
 =cut
 
@@ -71,7 +78,7 @@ use DNS::Unbound::AsyncQuery::PromiseES6 ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.20';
+    $VERSION = '0.21_01';
     XSLoader::load();
 }
 
@@ -215,8 +222,10 @@ synchronous one.
 This returns an instance of L<DNS::Unbound::AsyncQuery> (a subclass
 thereof, to be precise).
 
-L<See below|/"METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES"> for
-the methods you’ll need to use in tandem with this one.
+If you’re using one of the special event interface subclasses
+(e.g., L<DNS::Unbound::IOAsync>) then the returned promise will resolve
+on its own. Otherwise, L<see below|/"CUSTOM EVENT LOOP INTEGRATION">
+for the methods you’ll need to use in tandem with this one.
 
 =cut
 
@@ -478,11 +487,14 @@ sub resolvconf {
 
 #----------------------------------------------------------------------
 
-=head1 METHODS FOR DEALING WITH ASYNCHRONOUS QUERIES
+=head1 CUSTOM EVENT LOOP INTEGRATION
 
 Unless otherwise noted, the following methods correspond to their
 equivalents in libunbound. They return the same values as the
 libunbound equivalents.
+
+You don’t need these if you use one of the event loop subclasses
+(which is recommended).
 
 =head2 I<OBJ>->poll()
 

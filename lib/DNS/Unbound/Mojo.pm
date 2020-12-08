@@ -42,6 +42,8 @@ use parent (
     'DNS::Unbound::FDFHStorer',
 );
 
+use DNS::Unbound::AsyncQuery::MojoPromise ();
+
 use Scalar::Util ();
 
 use Mojo::IOLoop ();
