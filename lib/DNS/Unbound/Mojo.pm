@@ -7,11 +7,13 @@ use warnings;
 
 =head1 NAME
 
-DNS::Unbound::Mojo
+DNS::Unbound::Mojo - L<DNS::Unbound> for L<Mojolicious>
 
 =head1 SYNOPSIS
 
-    DNS::Unbound::Mojo->new()->resolve_p("perl.org", "A")->then(
+    my $unbound = DNS::Unbound::Mojo->new();
+
+    $unbound->resolve_p("perl.org", "A")->then(
         sub {
             my $result = shift;
 
@@ -22,6 +24,7 @@ DNS::Unbound::Mojo
 =head1 DESCRIPTION
 
 This class provides native L<Mojolicious> compatibility for L<DNS::Unbound>.
+
 In particular:
 
 =over

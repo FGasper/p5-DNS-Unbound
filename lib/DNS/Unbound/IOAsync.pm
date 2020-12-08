@@ -3,6 +3,39 @@ package DNS::Unbound::IOAsync;
 use strict;
 use warnings;
 
+=encoding utf-8
+
+=head1 NAME
+
+DNS::Unbound::IOAsync - L<DNS::Unbound> for L<IO::Async>
+
+=head1 SYNOPSIS
+
+    my $loop = IO::Async::Loop->new();
+
+    my $unbound = DNS::Unbound::IOAsync->new($loop);
+
+    $unbound->resolve_async("perl.org", "A")->then(
+        sub {
+            my $result = shift;
+
+            # ...
+        }
+    )->finally( sub { $loop->stop() } );
+
+    $loop->run();
+
+=head1 DESCRIPTION
+
+This class provides native L<IO::Async> compatibility for L<DNS::Unbound>.
+
+Note that this class’s C<new()> requires an L<IO::Async::Loop> instance
+to be passed. (See the L</SYNOPSIS>.)
+
+=cut
+
+#----------------------------------------------------------------------
+
 use parent (
     'DNS::Unbound::EventLoopBase',
     'DNS::Unbound::FDFHStorer',
