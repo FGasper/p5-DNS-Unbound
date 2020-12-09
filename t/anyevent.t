@@ -18,7 +18,7 @@ my $name = 'example.com';
 
 my $cv = AnyEvent->condvar();
 
-DNS::Unbound::AnyEvent->new()->resolve_async($name, 'NS')->then(
+my $p = DNS::Unbound::AnyEvent->new()->resolve_async($name, 'NS')->then(
     sub {
         my ($result) = @_;
 
@@ -30,7 +30,9 @@ DNS::Unbound::AnyEvent->new()->resolve_async($name, 'NS')->then(
         my $why = shift;
         fail $why;
     },
-)->finally($cv);
+);
+
+$p->finally($cv);
 
 $cv->recv();
 

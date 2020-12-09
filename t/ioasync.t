@@ -18,7 +18,7 @@ my $name = 'example.com';
 
 my $loop = IO::Async::Loop->new();
 
-DNS::Unbound::IOAsync->new($loop)->resolve_async($name, 'NS')->then(
+my $p = DNS::Unbound::IOAsync->new($loop)->resolve_async($name, 'NS')->then(
     sub {
         my ($result) = @_;
 
@@ -30,7 +30,9 @@ DNS::Unbound::IOAsync->new($loop)->resolve_async($name, 'NS')->then(
         my $why = shift;
         fail $why;
     },
-)->finally( sub { $loop->stop() } );
+);
+
+$p->finally( sub { $loop->stop() } );
 
 $loop->run();
 
