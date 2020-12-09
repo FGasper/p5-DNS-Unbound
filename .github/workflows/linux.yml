@@ -15,7 +15,7 @@ jobs:
 
     env:
        PERL_USE_UNSAFE_INC: 0
-       AUTHOR_TESTING: 1
+       AUTHOR_TESTING: 0
        AUTOMATED_TESTING: 1
        RELEASE_TESTING: 0
        PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
@@ -58,8 +58,6 @@ jobs:
         run: "cpanm --notest Mojolicious ||:"
       - name: Install Promise::XS (optional)
         run: "cpanm --notest Promise::XS ||:"
-      - name: EXTRA
-        run: "AUTHOR_TESTING=1 prove -wlmvb t/resolvconf.t"
       - name: perl Makefile.PL
         run: perl Makefile.PL
       - name: make
