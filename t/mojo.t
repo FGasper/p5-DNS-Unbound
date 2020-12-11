@@ -22,18 +22,26 @@ is(
     'resolve_p() alias',
 );
 
-DNS::Unbound::Mojo->new()->resolve_p($name, 'NS')->then(
-    sub {
-        my ($result) = @_;
+SKIP: {
+    eval { my $p = Mojo::Promise->new( sub { } ); 1 } or do {
+        my $err = $@;
+        require Mojolicious;
+        skip "This Mojo::Promise ($Mojolicious::VERSION) isn’t ES6-compatible: $err", 1;
+    };
 
-        isa_ok( $result, 'DNS::Unbound::Result', 'promise resolution' );
+    DNS::Unbound::Mojo->new()->resolve_p($name, 'NS')->then(
+        sub {
+            my ($result) = @_;
 
-        diag explain [ passed => $result ];
-    },
-    sub {
-        my $why = shift;
-        fail $why;
-    },
-)->wait();
+            isa_ok( $result, 'DNS::Unbound::Result', 'promise resolution' );
+
+            diag explain [ passed => $result ];
+        },
+        sub {
+            my $why = shift;
+            fail $why;
+        },
+    )->wait();
+}
 
 done_testing();
