@@ -1,5 +1,5 @@
 TYPEMAP
-struct ub_ctx*  DNS_UNBOUND_T_PTROBJ
+dns_unbound_ub_ctx*  DNS_UNBOUND_T_PTROBJ
 
 INPUT
 DNS_UNBOUND_T_PTROBJ
