@@ -1,6 +1,7 @@
 Revision history for Perl module DNS::Unbound
 
 0.21
+- Spruce up typemap’s mismatch error reporting.
 - Fix author test resolvconf.t after default port changed from 53 to 5353
   in Net::DNS::Nameserver version 1.28.
 - Special classes for AnyEvent, IO::Async, and Mojolicious are added.
