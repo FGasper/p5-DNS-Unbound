@@ -51,6 +51,11 @@ You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 This library is a Perl interface to NLNetLabs’s widely-used
 L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver.
 
+=head1 CHARACTER ENCODING
+
+All strings given to this module must be B<byte> B<strings>.
+All returned strings will be byte strings as well.
+
 =head1 EVENT LOOPS
 
 This distribution includes the classes L<DNS::Unbound::AnyEvent>,
