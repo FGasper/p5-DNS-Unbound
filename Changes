@@ -1,6 +1,6 @@
 Revision history for Perl module DNS::Unbound
 
-0.22
+0.22 Thu, 25 Feb 2021
 - BUG FIX: Use byte representation to send strings to C. This fixes
   encoding problems with non-ASCII strings.
 
