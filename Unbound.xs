@@ -22,10 +22,12 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
             datasize++;
         }
 
-        av_extend(data, datasize - 1);
+        if (datasize) {
+            av_extend(data, datasize - 1);
 
-        for (unsigned i=0; i<datasize; i++) {
-            av_store(data, i, newSVpvn(result->data[i], result->len[i]));
+            for (unsigned i=0; i<datasize; i++) {
+                av_store(data, i, newSVpvn(result->data[i], result->len[i]));
+            }
         }
     }
 
