@@ -15,13 +15,17 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     SV *val;
 
     AV *data = newAV();
-    unsigned int i = 0;
+    unsigned datasize = 0;
 
     if (result->data != NULL) {
-        while (result->data[i] != NULL) {
-            val = newSVpvn(result->data[i], result->len[i]);
-            av_push(data, val);
-            i++;
+        while (result->data[datasize] != NULL) {
+            datasize++;
+        }
+
+        av_extend(data, datasize - 1);
+
+        for (unsigned i=0; i<datasize; i++) {
+            av_store(data, i, newSVpvn(result->data[i], result->len[i]));
         }
     }
 
@@ -36,7 +40,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
     val = newSViv(result->qclass);
     hv_stores(rh, "qclass", val);
 
-    hv_stores(rh, "data", newRV_inc((SV *)data));
+    hv_stores(rh, "data", newRV_noinc((SV *)data));
 
     val = newSVpv(result->canonname, 0);
     hv_stores(rh, "canonname", val);
@@ -192,7 +196,7 @@ _ub_ctx_get_option( dns_unbound_ub_ctx *ctx, SV* opt)
             SV *val = newSVpv(str, 0);
 
             // On success, return a reference to an SV that gives the value.
-            RETVAL = newRV_inc(val);
+            RETVAL = newRV_noinc(val);
         }
 
         free(str);
@@ -326,10 +330,11 @@ _resolve_async( dns_unbound_ub_ctx *ctx, SV *name_sv, int type, int class, SV *r
         );
 
         AV *ret = newAV();
-        av_push( ret, newSViv(reserr) );
-        av_push( ret, newSViv(async_id) );
+        av_extend(ret, 1);  // 2 elems - 1
+        av_store( ret, 0, newSViv(reserr) );
+        av_store( ret, 1, newSViv(async_id) );
 
-        RETVAL = newRV_inc((SV *)ret);
+        RETVAL = newRV_noinc((SV *)ret);
     OUTPUT:
         RETVAL
 
@@ -346,7 +351,7 @@ _resolve( dns_unbound_ub_ctx *ctx, SV *name, int type, int class = 1 )
         }
         else {
             SV *svhv = _ub_result_to_svhv_and_free(result);
-            RETVAL = newRV_inc(svhv);
+            RETVAL = newRV_noinc(svhv);
         }
 
     OUTPUT:
