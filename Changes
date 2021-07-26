@@ -2,7 +2,7 @@ Revision history for Perl module DNS::Unbound
 
 0.24
 - BUG FIX: Several memory leaks from errantly-high reference counts.
-- Population of arrays from C is now a bit more efficient.
+- Various tweaks for efficiency: pre-extend arrays, use &PL_sv_(yes|no), etc.
 
 0.23 Tue, 1 Jun 2021
 - Make unbound_version() a regular XSUB rather than a constant. This avoids

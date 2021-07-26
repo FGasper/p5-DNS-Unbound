@@ -12,7 +12,6 @@
 typedef struct ub_ctx dns_unbound_ub_ctx;
 
 SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
-    SV *val;
 
     AV *data = newAV();
     unsigned datasize = 0;
@@ -33,34 +32,25 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 
     HV * rh = newHV();
 
-    val = newSVpv(result->qname, 0);
-    hv_stores(rh, "qname", val);
+    hv_stores(rh, "qname", newSVpv(result->qname, 0));
 
-    val = newSViv(result->qtype);
-    hv_stores(rh, "qtype", val);
+    hv_stores(rh, "qtype", newSViv(result->qtype));
 
-    val = newSViv(result->qclass);
-    hv_stores(rh, "qclass", val);
+    hv_stores(rh, "qclass", newSViv(result->qclass));
 
     hv_stores(rh, "data", newRV_noinc((SV *)data));
 
-    val = newSVpv(result->canonname, 0);
-    hv_stores(rh, "canonname", val);
+    hv_stores(rh, "canonname", newSVpv(result->canonname, 0));
 
-    val = newSViv(result->rcode);
-    hv_stores(rh, "rcode", val);
+    hv_stores(rh, "rcode", newSViv(result->rcode));
 
-    val = newSViv(result->havedata);
-    hv_stores(rh, "havedata", val);
+    hv_stores(rh, "havedata", boolSV(result->havedata));
 
-    val = newSViv(result->nxdomain);
-    hv_stores(rh, "nxdomain", val);
+    hv_stores(rh, "nxdomain", boolSV(result->nxdomain));
 
-    val = newSViv(result->secure);
-    hv_stores(rh, "secure", val);
+    hv_stores(rh, "secure", boolSV(result->secure));
 
-    val = newSViv(result->bogus);
-    hv_stores(rh, "bogus", val);
+    hv_stores(rh, "bogus", boolSV(result->bogus));
 
     hv_stores(rh, "why_bogus",
 #if HAS_WHY_BOGUS
@@ -78,8 +68,7 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 #endif
     );
 
-    val = newSVpvn(result->answer_packet, result->answer_len);
-    hv_stores(rh, "answer_packet", val);
+    hv_stores(rh, "answer_packet", newSVpvn(result->answer_packet, result->answer_len));
 
     ub_resolve_free(result);
 

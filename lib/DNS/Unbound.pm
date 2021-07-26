@@ -83,7 +83,7 @@ use DNS::Unbound::AsyncQuery::PromiseES6 ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.24_02';
+    $VERSION = '0.24_03';
     XSLoader::load();
 }
 
