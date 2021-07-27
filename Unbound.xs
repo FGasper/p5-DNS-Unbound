@@ -44,13 +44,13 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 
     hv_stores(rh, "rcode", newSViv(result->rcode));
 
-    hv_stores(rh, "havedata", boolSV(result->havedata));
-
-    hv_stores(rh, "nxdomain", boolSV(result->nxdomain));
-
-    hv_stores(rh, "secure", boolSV(result->secure));
-
-    hv_stores(rh, "bogus", boolSV(result->bogus));
+    /* Ideally these could use boolSV(), but the efficiency gains
+       probably don’t justify the API change. libunbound(3) documents
+       these as ints, not bools, so we should preserve that. */
+    hv_stores(rh, "havedata",   newSViv(result->havedata));
+    hv_stores(rh, "nxdomain",   newSViv(result->nxdomain));
+    hv_stores(rh, "secure",     newSViv(result->secure));
+    hv_stores(rh, "bogus",      newSViv(result->bogus));
 
     hv_stores(rh, "why_bogus",
 #if HAS_WHY_BOGUS
