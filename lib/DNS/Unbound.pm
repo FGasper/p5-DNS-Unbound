@@ -261,9 +261,18 @@ sub resolve_async {
         $promise = $query_class->new( sub { ( $res, $rej ) = @_ } );
     }
 
+    my %dns = (
+        ctx => $ctx,
+        fulfilled => 0,
+    );
+
+    my $fulfilled_sr = \$dns{'fulfilled'};
+
     my $async_ar = $ctx->_resolve_async(
         $name, $type, $class,
         sub {
+            $$fulfilled_sr = 1;
+
             if ( ref $_[0] ) {
                 $res->( DNS::Unbound::Result->new( %{ $_[0] } ) );
             }
@@ -276,6 +285,10 @@ sub resolve_async {
     if ( my $err = $async_ar->[0] ) {
         die _create_resolve_error($err);
     }
+
+    $dns{'id'} = $async_ar->[1];
+
+    $promise->_set_dns(\%dns);
 
     return $promise;
 }

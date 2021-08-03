@@ -10,7 +10,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1
@@ -191,10 +191,10 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 }
 
 void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
-    fprintf(stderr, "RESOLVE CALLBACK (mydata=%p)\n", mydata);
+    _DEBUG("RESOLVE CALLBACK (mydata=%p)\n", mydata);
 
     dub_query_ctx_t *query_ctx = mydata;
-    fprintf(stderr, "RESOLVE CALLBACK 2 (ID=%d)\n", query_ctx->id);
+    _DEBUG("RESOLVE CALLBACK 2 (ID=%d)\n", query_ctx->id);
 
 #if NEED_THX
     pTHX = query_ctx->my_aTHX;
@@ -202,7 +202,7 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
 #endif
 
     SV* result_sv;
-    fprintf(stderr, "err: %d\n", err);
+    _DEBUG("err: %d\n", err);
 
     if (err) {
         result_sv = newSViv(err);
