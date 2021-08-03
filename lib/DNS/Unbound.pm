@@ -73,7 +73,7 @@ of this class.
 use XSLoader ();
 
 use DNS::Unbound::Result ();
-use DNS::Unbound::X ();
+use DNS::Unbound::X      ();
 
 # Load the default async query implementation.
 # This may change when non-default implementations
@@ -162,9 +162,10 @@ Instantiates this class.
 
 sub new {
     return bless {
-        _ub => DNS::Unbound::Context::create(),
+        _ub  => DNS::Unbound::Context::create(),
         _pid => $$,
-    }, shift();
+      },
+      shift();
 }
 
 =head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
@@ -189,19 +190,19 @@ sub resolve {
 
     my $result = $_[0]{'_ub'}->_resolve( $_[1], $type, $_[3] || () );
 
-    if (!ref($result)) {
+    if ( !ref($result) ) {
         die _create_resolve_error($result);
     }
 
-    return DNS::Unbound::Result->new( %$result );
+    return DNS::Unbound::Result->new(%$result);
 }
 
 sub _normalize_type_to_number {
     my ($type) = @_;
 
-    if ($type =~ tr<0-9><>c) {
+    if ( $type =~ tr<0-9><>c ) {
         return _COMMON_RR()->{$type} || do {
-            local ($@, $!);
+            local ( $@, $! );
 
             require Net::DNS::Parameters;
             Net::DNS::Parameters::typebyname($type);
@@ -214,7 +215,7 @@ sub _normalize_type_to_number {
 sub _create_resolve_error {
     my ($number) = @_;
 
-    return DNS::Unbound::X->create('ResolveError', number => $number, string => _ub_strerror($number));
+    return DNS::Unbound::X->create( 'ResolveError', number => $number, string => _ub_strerror($number) );
 }
 
 #----------------------------------------------------------------------
@@ -239,15 +240,15 @@ sub resolve_async {
     $type = $type = _normalize_type_to_number($type);
 
     # Prevent memory leaks.
-    my $ctx = $_[0]->{'_ub'};
-    my $name = $_[1];
+    my $ctx   = $_[0]->{'_ub'};
+    my $name  = $_[1];
     my $class = $_[3] || 1;
 
-    my ($promise, $res, $rej, $deferred);
+    my ( $promise, $res, $rej, $deferred );
 
     my $query_class = $_[0]->_load_asyncquery_if_needed();
 
-    if (my $deferred_cr = $query_class->_DEFERRED_CR()) {
+    if ( my $deferred_cr = $query_class->_DEFERRED_CR() ) {
         $deferred = $deferred_cr->();
 
         $res = sub { $deferred->resolve(@_) };
@@ -257,22 +258,22 @@ sub resolve_async {
         bless $promise, $query_class;
     }
     else {
-        $promise = $query_class->new( sub { ($res, $rej) = @_ } );
+        $promise = $query_class->new( sub { ( $res, $rej ) = @_ } );
     }
 
     my $async_ar = $ctx->_resolve_async(
         $name, $type, $class,
         sub {
-            if (ref $_[0]) {
-                $res->(DNS::Unbound::Result->new(%{ $_[0] }));
+            if ( ref $_[0] ) {
+                $res->( DNS::Unbound::Result->new( %{ $_[0] } ) );
             }
             else {
-                $rej->( _create_resolve_error($_[0]) );
+                $rej->( _create_resolve_error( $_[0] ) );
             }
         },
     );
 
-    if (my $err = $async_ar->[0]) {
+    if ( my $err = $async_ar->[0] ) {
         die _create_resolve_error($err);
     }
 
@@ -289,8 +290,8 @@ sub _load_asyncquery_if_needed {
 
     my $ns = "DNS::Unbound::AsyncQuery::$engine";
 
-    if (!$ns->can('cancel')) {
-        local ($@, $!);
+    if ( !$ns->can('cancel') ) {
+        local ( $@, $! );
         die if !eval "require DNS::Unbound::AsyncQuery::$engine";
     }
 
@@ -320,7 +321,7 @@ to work without issue.
 sub enable_threads {
     my ($self) = @_;
 
-    $self->{'_ub'}->_ub_ctx_async( 1 );
+    $self->{'_ub'}->_ub_ctx_async(1);
 
     return $self;
 }
@@ -380,7 +381,7 @@ Gets a configuration option’s value.
 sub get_option {
     my $got = $_[0]->{'_ub'}->_ub_ctx_get_option( $_[1] );
 
-    if (!ref($got)) {
+    if ( !ref($got) ) {
         my $str = _get_error_string_from_number($got);
         die "Failed to get “$_[1]” option: $str";
     }
@@ -414,12 +415,12 @@ Returns I<OBJ>.
 =cut
 
 sub debugout {
-    my ($self, $fd_or_fh) = @_;
+    my ( $self, $fd_or_fh ) = @_;
 
     my $fd = ref($fd_or_fh) ? fileno($fd_or_fh) : $fd_or_fh;
 
     my $mode = _get_fd_mode_for_fdopen($fd) or do {
-        die DNS::Unbound::X->create('BadDebugFD', $fd, $!);
+        die DNS::Unbound::X->create( 'BadDebugFD', $fd, $! );
     };
 
     $self->{'_ub'}->_ub_ctx_debugout( $fd, $mode );
@@ -492,7 +493,7 @@ Z<>
 =cut
 
 sub poll {
-    return $_[0]->{'_ub'}->_ub_poll(  );
+    return $_[0]->{'_ub'}->_ub_poll();
 }
 
 =head2 I<OBJ>->fd()
@@ -512,7 +513,7 @@ Z<>
 =cut
 
 sub wait {
-    my $ret = $_[0]->{'_ub'}->_ub_wait(  );
+    my $ret = $_[0]->{'_ub'}->_ub_wait();
 
     #$_[0]->_check_promises();
 
@@ -526,7 +527,7 @@ Z<>
 =cut
 
 sub process {
-    my $ret = $_[0]->{'_ub'}->_ub_process( );
+    my $ret = $_[0]->{'_ub'}->_ub_process();
 
     return $ret;
 }
@@ -540,9 +541,7 @@ Returns the number of outstanding asynchronous queries.
 sub count_pending_queries {
     my ($self) = @_;
 
-die 'TODO';
-
-    return $self->{'_queries_lookup'} ? 0 + keys %{ $self->{'_queries_lookup'} } : 0;
+    return $self->{'_ub'}->_count_pending_queries();
 }
 
 #----------------------------------------------------------------------
@@ -696,8 +695,8 @@ and expected.
 =cut
 
 sub decode_name {
-    shift if (ref $_[0]) && (ref $_[0])->isa(__PACKAGE__);
-    return join( '.', @{ decode_character_strings($_[0]) } );
+    shift if ( ref $_[0] ) && ( ref $_[0] )->isa(__PACKAGE__);
+    return join( '.', @{ decode_character_strings( $_[0] ) } );
 }
 
 =head2 $strings_ar = decode_character_strings($encoded)
@@ -708,22 +707,15 @@ returned as an array reference. Useful for C<TXT> query results.
 =cut
 
 sub decode_character_strings {
-    shift if (ref $_[0]) && (ref $_[0])->isa(__PACKAGE__);
+    shift if ( ref $_[0] ) && ( ref $_[0] )->isa(__PACKAGE__);
     return [ unpack( '(C/a)*', $_[0] ) ];
 }
 
 #----------------------------------------------------------------------
 
-sub mydump {
-print "===== mydump\n";
-print "===== mydump (@_)\n";
-use Data::Dumper;
-print Dumper shift;
-}
-
 sub DESTROY {
     $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
-        if ($$ == $_[0]->{'_pid'}) {
+        if ( $$ == $_[0]->{'_pid'} ) {
 
             # If DESTROY fires at global destruction the internal libunbound
             # context object might already have been garbage-collected, in
@@ -738,7 +730,7 @@ sub DESTROY {
             # promise, it would write to memory that *formerly* held our
             # result SV but now holds something else.
 
-            if (my $queries_hr = $_[0]->{'_queries_dns'}) {
+            if ( my $queries_hr = $_[0]->{'_queries_dns'} ) {
                 %$queries_hr = ();
             }
         }

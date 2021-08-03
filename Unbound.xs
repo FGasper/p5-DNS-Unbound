@@ -3,13 +3,14 @@
 #include "XSUB.h"
 
 #include <unbound.h>    /* unbound API */
+#include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1
@@ -20,8 +21,10 @@
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str "\n", ##__VA_ARGS__);
 
 typedef struct {
+    pid_t pid;
     struct ub_ctx* ub_ctx;
     HV* queries;
+    unsigned refcount;
 } DNS__Unbound__Context;
 
 typedef struct {
@@ -29,12 +32,35 @@ typedef struct {
     tTHX my_aTHX;
 #endif
 
+    pid_t pid;
+
     DNS__Unbound__Context* ctx;
 
     int id;
 
     SV* callback;
 } dub_query_ctx_t;
+
+// ----------------------------------------------------------------------
+
+#define _increment_dub_ctx_refcount(ctx) ctx->refcount++;
+
+static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
+    if (!--dub_ctx->refcount) {
+        _DEBUG("Freeing DNS__Unbound__Context");
+
+        if (getpid() == dub_ctx->pid && PL_dirty) {
+            warn("Freeing DNS::Unbound::Context instance at global destruction; memory leak likely!");
+        }
+
+        ub_ctx_delete(dub_ctx->ub_ctx);
+        dub_ctx->ub_ctx = NULL;
+
+        SvREFCNT_dec((SV*) dub_ctx->queries);
+
+        Safefree(dub_ctx);
+    }
+}
 
 // ----------------------------------------------------------------------
 
@@ -46,31 +72,16 @@ static dub_query_ctx_t* _store_query (pTHX_ DNS__Unbound__Context* ctx, dub_quer
 #if NEED_THX
         .my_aTHX = aTHX,
 #endif
+        .pid = getpid(),
         .ctx = ctx,
         .id  = async_id,
         .callback = newSVsv(callback),
     };
 
+    _increment_dub_ctx_refcount(ctx);
+
     const char* id_str = _query_id_str(async_id);
     hv_store(ctx->queries, id_str, strlen(id_str), newSVuv(PTR2UV(query_ctx)), 0);
-
-#if 0
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    //mPUSHs(result_sv);
-    mPUSHs(newRV_inc((SV*) ctx->queries));
-    PUTBACK;
-
-    // Hope nothing croaks here!
-    call_pv("DNS::Unbound::mydump", G_VOID | G_DISCARD);
-
-    FREETMPS;
-    LEAVE;
-#endif
 
     return query_ctx;
 }
@@ -87,7 +98,7 @@ static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int asyn
 }
 
 static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
-    _DEBUG("%s", __func__);
+    _DEBUG("%s %p", __func__, ctx);
     dub_query_ctx_t* query_ctx = _fetch_query(aTHX_ ctx, async_id);
 
     //SV* callback = sv_2mortal(query_ctx->callback);
@@ -96,6 +107,8 @@ static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
 
     const char* id_str = _query_id_str(async_id);
     hv_delete(ctx->queries, id_str, strlen(id_str), 0);
+
+    _decrement_dub_ctx_refcount(aTHX_ ctx);
 
     return callback;
 }
@@ -203,12 +216,15 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
 
     // Nothing should croak here:
     call_sv(callback, G_VOID | G_DISCARD);
+_DEBUG("after callback");
 
     FREETMPS;
     LEAVE;
 
     return;
 }
+
+// ----------------------------------------------------------------------
 
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
@@ -400,7 +416,22 @@ _ub_wait( DNS__Unbound__Context* ctx )
 int
 _ub_process( DNS__Unbound__Context* ctx )
     CODE:
+
+        // Never ub_ctx_delete(ub_ctx) while using ub_ctx:
+        _increment_dub_ctx_refcount(ctx);
+
         RETVAL = ub_process(ctx->ub_ctx);
+
+        _decrement_dub_ctx_refcount(aTHX_ ctx);
+
+    OUTPUT:
+        RETVAL
+
+unsigned
+_count_pending_queries ( DNS__Unbound__Context* ctx )
+    CODE:
+        RETVAL = hv_iterinit(ctx->queries);
+
     OUTPUT:
         RETVAL
 
@@ -501,8 +532,10 @@ create()
         Newx(dub_ctx, 1, DNS__Unbound__Context);
 
         *dub_ctx = (DNS__Unbound__Context) {
+            .pid = getpid(),
             .ub_ctx = my_ctx,
             .queries = newHV(),
+            .refcount = 1,
         };
 
         RETVAL = dub_ctx;
@@ -514,8 +547,6 @@ DESTROY (DNS__Unbound__Context* dub_ctx)
     CODE:
         _DEBUG("DESTROY context; time=%d\n", PL_phase);
 
-        ub_ctx_delete(dub_ctx->ub_ctx);
+        _decrement_dub_ctx_refcount(aTHX_ dub_ctx);
 
-        SvREFCNT_dec((SV*) dub_ctx->queries);
 
-        Safefree(dub_ctx);
