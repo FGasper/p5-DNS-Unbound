@@ -10,7 +10,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 0
+#define DEBUG 1
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1
@@ -62,6 +62,12 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     }
 }
 
+static dub_query_ctx_t* _QueryContext_to_query_ctx (pTHX_ SV* qc_sv) {
+    UV uvptr = SvUV( SvRV(qc_sv) );
+
+    return (void *) uvptr;
+}
+
 // ----------------------------------------------------------------------
 
 #define _query_id_str(async_id) form("%d", async_id)
@@ -81,12 +87,15 @@ static dub_query_ctx_t* _store_query (pTHX_ DNS__Unbound__Context* ctx, dub_quer
     _increment_dub_ctx_refcount(ctx);
 
     const char* id_str = _query_id_str(async_id);
-    hv_store(ctx->queries, id_str, strlen(id_str), newSVuv(PTR2UV(query_ctx)), 0);
+
+    SV* val = sv_setref_uv(newSV(0), "DNS::Unbound::QueryContext", PTR2UV(query_ctx));
+    hv_store(ctx->queries, id_str, strlen(id_str), val, 0);
 
     return query_ctx;
 }
 
 static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
+    _DEBUG("%s %p %d", __func__, ctx, async_id);
     const char* id_str = _query_id_str(async_id);
 
     SV** entry = hv_fetch(ctx->queries, id_str, strlen(id_str), 0);
@@ -94,21 +103,23 @@ static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int asyn
     // Sanity-check:
     if (!entry || !*entry) croak("no query with ID %s found?!?", id_str);
 
-    return (void *) SvUV(*entry);
+    _DEBUG("end %s %p %d", __func__, ctx, async_id);
+
+    return (void *) _QueryContext_to_query_ctx(aTHX_ *entry);
 }
 
 static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
-    _DEBUG("%s %p", __func__, ctx);
+    _DEBUG("%s %p %d", __func__, ctx, async_id);
     dub_query_ctx_t* query_ctx = _fetch_query(aTHX_ ctx, async_id);
 
-    //SV* callback = sv_2mortal(query_ctx->callback);
-    SV* callback = query_ctx->callback;
-    Safefree(query_ctx);
+    SV* callback = sv_2mortal(query_ctx->callback);
 
     const char* id_str = _query_id_str(async_id);
     hv_delete(ctx->queries, id_str, strlen(id_str), 0);
 
     _decrement_dub_ctx_refcount(aTHX_ ctx);
+
+    _DEBUG("end %s %p", __func__, ctx);
 
     return callback;
 }
@@ -440,6 +451,7 @@ int
 _ub_cancel( DNS__Unbound__Context* ctx, int async_id )
     CODE:
         int result = ub_cancel(ctx->ub_ctx, async_id);
+    fprintf(stderr, "cancel: %d\n", result);
 
         if (!result) {
             _unstore_query(aTHX_ ctx, async_id);
@@ -549,4 +561,20 @@ DESTROY (DNS__Unbound__Context* dub_ctx)
 
         _decrement_dub_ctx_refcount(aTHX_ dub_ctx);
 
+# ----------------------------------------------------------------------
 
+MODULE = DNS::Unbound   PACKAGE = DNS::Unbound::QueryContext
+
+void
+DESTROY (SV* self_sv)
+    CODE:
+        _DEBUG("%s", __func__);
+        UV uvptr = SvUV( SvRV(self_sv) );
+
+        dub_query_ctx_t* query_ctx = (void *) uvptr;
+
+        if (getpid() == query_ctx->pid && PL_dirty) {
+            warn("Freeing %" SVf " at global destruction; memory leak likely!", self_sv);
+        }
+
+        Safefree(query_ctx);

@@ -296,7 +296,7 @@ sub _load_asyncquery_if_needed {
     }
 
     $installed_cancel_cr ||= do {
-        $DNS::Unbound::AsyncQuery::CANCEL_CR = \&DNS::Unbound::_ub_cancel;
+        $DNS::Unbound::AsyncQuery::CANCEL_CR = \&DNS::Unbound::Context::_ub_cancel;
         1;
     };
 
