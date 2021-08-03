@@ -9,7 +9,98 @@
 
 #define UNUSED(x) (void)(x)
 
-typedef struct ub_ctx dns_unbound_ub_ctx;
+#define DEBUG 1
+
+#ifdef MULTIPLICITY
+#define NEED_THX 1
+#else
+#define NEED_THX 0
+#endif
+
+#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str "\n", ##__VA_ARGS__);
+
+typedef struct {
+    struct ub_ctx* ub_ctx;
+    HV* queries;
+} DNS__Unbound__Context;
+
+typedef struct {
+#if NEED_THX
+    tTHX my_aTHX;
+#endif
+
+    DNS__Unbound__Context* ctx;
+
+    int id;
+
+    SV* callback;
+} dub_query_ctx_t;
+
+// ----------------------------------------------------------------------
+
+#define _query_id_str(async_id) form("%d", async_id)
+
+static dub_query_ctx_t* _store_query (pTHX_ DNS__Unbound__Context* ctx, dub_query_ctx_t* query_ctx, int async_id, SV* callback) {
+
+    *query_ctx = (dub_query_ctx_t) {
+#if NEED_THX
+        .my_aTHX = aTHX,
+#endif
+        .ctx = ctx,
+        .id  = async_id,
+        .callback = newSVsv(callback),
+    };
+
+    const char* id_str = _query_id_str(async_id);
+    hv_store(ctx->queries, id_str, strlen(id_str), newSVuv(PTR2UV(query_ctx)), 0);
+
+#if 0
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    //mPUSHs(result_sv);
+    mPUSHs(newRV_inc((SV*) ctx->queries));
+    PUTBACK;
+
+    // Hope nothing croaks here!
+    call_pv("DNS::Unbound::mydump", G_VOID | G_DISCARD);
+
+    FREETMPS;
+    LEAVE;
+#endif
+
+    return query_ctx;
+}
+
+static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
+    const char* id_str = _query_id_str(async_id);
+
+    SV** entry = hv_fetch(ctx->queries, id_str, strlen(id_str), 0);
+
+    // Sanity-check:
+    if (!entry || !*entry) croak("no query with ID %s found?!?", id_str);
+
+    return (void *) SvUV(*entry);
+}
+
+static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
+    _DEBUG("%s", __func__);
+    dub_query_ctx_t* query_ctx = _fetch_query(aTHX_ ctx, async_id);
+
+    //SV* callback = sv_2mortal(query_ctx->callback);
+    SV* callback = query_ctx->callback;
+    Safefree(query_ctx);
+
+    const char* id_str = _query_id_str(async_id);
+    hv_delete(ctx->queries, id_str, strlen(id_str), 0);
+
+    return callback;
+}
+
+// ----------------------------------------------------------------------
 
 SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 
@@ -72,24 +163,49 @@ SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
 
     ub_resolve_free(result);
 
-    return (SV *)rh;
+    return newRV_noinc( (SV *)rh );
 }
 
 void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
-    SV *result_sv = (SV *) mydata;
+    fprintf(stderr, "RESOLVE CALLBACK (mydata=%p)\n", mydata);
+
+    dub_query_ctx_t *query_ctx = mydata;
+    fprintf(stderr, "RESOLVE CALLBACK 2 (ID=%d)\n", query_ctx->id);
+
+#if NEED_THX
+    pTHX = query_ctx->my_aTHX;
+    _DEBUG("RESOLVE CALLBACK 3");
+#endif
+
+    SV* result_sv;
+    fprintf(stderr, "err: %d\n", err);
 
     if (err) {
-        SvUPGRADE( result_sv, SVt_IV );
-        SvIV_set( result_sv, err );
-        SvIOK_on( result_sv );
+        result_sv = newSViv(err);
     }
     else {
-        SV * svres = _ub_result_to_svhv_and_free(result);
-
-        SvUPGRADE( result_sv, SVt_RV );
-        SvRV_set( result_sv, svres );
-        SvROK_on( result_sv );
+        result_sv = _ub_result_to_svhv_and_free(result);
     }
+
+    SV* callback = _unstore_query(aTHX_ query_ctx->ctx, query_ctx->id );
+
+    // --------------------------------------------------
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(result_sv);
+    //mPUSHs(newSVuv(42));
+    PUTBACK;
+
+    // Nothing should croak here:
+    call_sv(callback, G_VOID | G_DISCARD);
+
+    FREETMPS;
+    LEAVE;
 
     return;
 }
@@ -98,34 +214,61 @@ MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
 
-dns_unbound_ub_ctx*
-_create_context()
+const char*
+_get_fd_mode_for_fdopen(int fd)
     CODE:
-        dns_unbound_ub_ctx* my_ctx = ub_ctx_create();
+        int flags = fcntl( fd, F_GETFL );
 
-        if (!my_ctx) {
-            croak("Failed to create Unbound context!");
+        if ( flags == -1 ) {
+            SETERRNO( errno, 0 );
+            RETVAL = "";
         }
-
-        RETVAL = my_ctx;
+        else {
+            RETVAL = (flags & O_APPEND) ? "a" : "w";
+        }
     OUTPUT:
         RETVAL
+
+const char *
+_ub_strerror( int err )
+    CODE:
+        RETVAL = ub_strerror(err);
+    OUTPUT:
+        RETVAL
+
+#if HAS_UB_VERSION
+SV*
+unbound_version(...)
+    CODE:
+        UNUSED(items);
+        RETVAL = newSVpv( ub_version(), 0 );
+
+    OUTPUT:
+        RETVAL
+
+#endif
+
+# ----------------------------------------------------------------------
+
+MODULE = DNS::Unbound           PACKAGE = DNS::Unbound::Context
+
+PROTOTYPES: DISABLE
 
 int
-_ub_ctx_set_option( dns_unbound_ub_ctx *ctx, const char* opt, SV* val_sv)
+_ub_ctx_set_option( DNS__Unbound__Context* ctx, const char* opt, SV* val_sv)
     CODE:
         char *val = SvPVbyte_nolen(val_sv);
-        RETVAL = ub_ctx_set_option(ctx, opt, val);
+        RETVAL = ub_ctx_set_option(ctx->ub_ctx, opt, val);
     OUTPUT:
         RETVAL
 
 void
-_ub_ctx_debuglevel( dns_unbound_ub_ctx *ctx, int d )
+_ub_ctx_debuglevel( DNS__Unbound__Context* ctx, int d )
     CODE:
-        ub_ctx_debuglevel(ctx, d);
+        ub_ctx_debuglevel(ctx->ub_ctx, d);
 
 void
-_ub_ctx_debugout( dns_unbound_ub_ctx *ctx, int fd, SV *mode_sv )
+_ub_ctx_debugout( DNS__Unbound__Context* ctx, int fd, SV *mode_sv )
     CODE:
         char *mode = SvPVbyte_nolen(mode_sv);
         FILE *fstream;
@@ -151,32 +294,18 @@ _ub_ctx_debugout( dns_unbound_ub_ctx *ctx, int fd, SV *mode_sv )
             setvbuf(fstream, NULL, _IONBF, 0);
         }
 
-        ub_ctx_debugout( ctx, fstream );
+        ub_ctx_debugout( ctx->ub_ctx, fstream );
 
-const char*
-_get_fd_mode_for_fdopen(int fd)
-    CODE:
-        int flags = fcntl( fd, F_GETFL );
-
-        if ( flags == -1 ) {
-            SETERRNO( errno, 0 );
-            RETVAL = "";
-        }
-        else {
-            RETVAL = (flags & O_APPEND) ? "a" : "w";
-        }
-    OUTPUT:
-        RETVAL
 
 
 SV*
-_ub_ctx_get_option( dns_unbound_ub_ctx *ctx, SV* opt)
+_ub_ctx_get_option( DNS__Unbound__Context* ctx, SV* opt)
     CODE:
         char *str;
 
         char *opt_str = SvPVbyte_nolen(opt);
 
-        int fate = ub_ctx_get_option(ctx, opt_str, &str);
+        int fate = ub_ctx_get_option(ctx->ub_ctx, opt_str, &str);
 
         if (fate) {
 
@@ -195,112 +324,111 @@ _ub_ctx_get_option( dns_unbound_ub_ctx *ctx, SV* opt)
         RETVAL
 
 int
-_ub_ctx_add_ta( dns_unbound_ub_ctx *ctx, SV *ta )
+_ub_ctx_add_ta( DNS__Unbound__Context* ctx, SV *ta )
     CODE:
         char *ta_str = SvPVbyte_nolen(ta);
-        RETVAL = ub_ctx_add_ta( ctx, ta_str );
+        RETVAL = ub_ctx_add_ta( ctx->ub_ctx, ta_str );
     OUTPUT:
         RETVAL
 
 #if HAS_UB_CTX_ADD_TA_AUTR
 int
-_ub_ctx_add_ta_autr( dns_unbound_ub_ctx *ctx, SV *fname )
+_ub_ctx_add_ta_autr( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
         char *fname_str = SvPVbyte_nolen(fname);
-        RETVAL = ub_ctx_add_ta_autr( ctx, fname_str );
+        RETVAL = ub_ctx_add_ta_autr( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
 
 #endif
 
 int
-_ub_ctx_resolvconf( dns_unbound_ub_ctx *ctx, SV *fname_sv )
+_ub_ctx_resolvconf( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
         char *fname = SvOK(fname_sv) ? SvPVbyte_nolen(fname_sv) : NULL;
 
-        RETVAL = ub_ctx_resolvconf( ctx, fname );
+        RETVAL = ub_ctx_resolvconf( ctx->ub_ctx, fname );
     OUTPUT:
         RETVAL
 
 int
-_ub_ctx_hosts( dns_unbound_ub_ctx *ctx, SV *fname_sv )
+_ub_ctx_hosts( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
         char *fname = SvOK(fname_sv) ? SvPVbyte_nolen(fname_sv) : NULL;
 
-        RETVAL = ub_ctx_hosts( ctx, fname );
+        RETVAL = ub_ctx_hosts( ctx->ub_ctx, fname );
     OUTPUT:
         RETVAL
 
 int
-_ub_ctx_add_ta_file( dns_unbound_ub_ctx *ctx, SV *fname )
+_ub_ctx_add_ta_file( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
         char *fname_str = SvPVbyte_nolen(fname);
-        RETVAL = ub_ctx_add_ta_file( ctx, fname_str );
+        RETVAL = ub_ctx_add_ta_file( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
 
 int
-_ub_ctx_trustedkeys( dns_unbound_ub_ctx *ctx, SV *fname )
+_ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
         char *fname_str = SvPVbyte_nolen(fname);
-        RETVAL = ub_ctx_trustedkeys( ctx, fname_str );
-    OUTPUT:
-        RETVAL
-
-const char *
-_ub_strerror( int err )
-    CODE:
-        RETVAL = ub_strerror(err);
+        RETVAL = ub_ctx_trustedkeys( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
 
 int
-_ub_ctx_async( dns_unbound_ub_ctx *ctx, int dothread )
+_ub_ctx_async( DNS__Unbound__Context* ctx, int dothread )
     CODE:
-        RETVAL = ub_ctx_async( ctx, dothread );
+        RETVAL = ub_ctx_async( ctx->ub_ctx, dothread );
     OUTPUT:
         RETVAL
 
 int
-_ub_poll( dns_unbound_ub_ctx *ctx )
+_ub_poll( DNS__Unbound__Context* ctx )
     CODE:
-        RETVAL = ub_poll(ctx);
+        RETVAL = ub_poll(ctx->ub_ctx);
     OUTPUT:
         RETVAL
 
 int
-_ub_wait( dns_unbound_ub_ctx *ctx )
+_ub_wait( DNS__Unbound__Context* ctx )
     CODE:
-        RETVAL = ub_wait(ctx);
+        RETVAL = ub_wait(ctx->ub_ctx);
     OUTPUT:
         RETVAL
 
 int
-_ub_process( dns_unbound_ub_ctx *ctx )
+_ub_process( DNS__Unbound__Context* ctx )
     CODE:
-        RETVAL = ub_process(ctx);
+        RETVAL = ub_process(ctx->ub_ctx);
     OUTPUT:
         RETVAL
 
 #if HAS_UB_CANCEL
 int
-_ub_cancel( dns_unbound_ub_ctx *ctx, int async_id )
+_ub_cancel( DNS__Unbound__Context* ctx, int async_id )
     CODE:
-        RETVAL = ub_cancel(ctx, async_id);
+        int result = ub_cancel(ctx->ub_ctx, async_id);
+
+        if (!result) {
+            _unstore_query(aTHX_ ctx, async_id);
+        }
+
+        RETVAL = result;
     OUTPUT:
         RETVAL
 
 #endif
 
 int
-_ub_fd( dns_unbound_ub_ctx *ctx )
+_ub_fd( DNS__Unbound__Context* ctx )
     CODE:
-        RETVAL = ub_fd(ctx);
+        RETVAL = ub_fd(ctx->ub_ctx);
     OUTPUT:
         RETVAL
 
 SV*
-_resolve_async( dns_unbound_ub_ctx *ctx, SV *name_sv, int type, int class, SV *result )
+_resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV *callback )
     CODE:
         char *name = SvPVbyte_nolen(name_sv);
 
@@ -314,10 +442,13 @@ _resolve_async( dns_unbound_ub_ctx *ctx, SV *name_sv, int type, int class, SV *r
         // This does mean that it has to be Perl that checks for whether
         // the result SV is populated--which seems to work just fine.
 
+        dub_query_ctx_t* query_ctx;
+        Newx(query_ctx, 1, dub_query_ctx_t);
+
         int reserr = ub_resolve_async(
-            ctx,
+            ctx->ub_ctx,
             name, type, class,
-            (void *) result, _async_resolve_callback, &async_id
+            (void *) query_ctx, _async_resolve_callback, &async_id
         );
 
         AV *ret = newAV();
@@ -325,46 +456,66 @@ _resolve_async( dns_unbound_ub_ctx *ctx, SV *name_sv, int type, int class, SV *r
         av_store( ret, 0, newSViv(reserr) );
         av_store( ret, 1, newSViv(async_id) );
 
+        if (reserr) {
+            Safefree(query_ctx);
+            _unstore_query(aTHX_ ctx, async_id);
+        }
+        else {
+            _store_query(aTHX_ ctx, query_ctx, async_id, callback);
+            _DEBUG("New query ID: %d", async_id);
+        }
+
+
         RETVAL = newRV_noinc((SV *)ret);
     OUTPUT:
         RETVAL
 
 SV*
-_resolve( dns_unbound_ub_ctx *ctx, SV *name, int type, int class = 1 )
+_resolve( DNS__Unbound__Context* ctx, SV *name, int type, int class = 1 )
     CODE:
         struct ub_result* result;
         int retval;
 
-        retval = ub_resolve(ctx, SvPVbyte_nolen(name), type, class, &result);
+        retval = ub_resolve(ctx->ub_ctx, SvPVbyte_nolen(name), type, class, &result);
 
         if (retval != 0) {
             RETVAL = newSViv(retval);
         }
         else {
-            SV *svhv = _ub_result_to_svhv_and_free(result);
-            RETVAL = newRV_noinc(svhv);
+            RETVAL = _ub_result_to_svhv_and_free(result);
         }
 
     OUTPUT:
         RETVAL
 
-#if HAS_UB_VERSION
-SV*
-unbound_version(...)
+DNS__Unbound__Context*
+create()
     CODE:
-        UNUSED(items);
-        RETVAL = newSVpv( ub_version(), 0 );
+        struct ub_ctx* my_ctx = ub_ctx_create();
 
+        if (!my_ctx) {
+            croak("Failed to create Unbound context!");
+        }
+
+        DNS__Unbound__Context* dub_ctx;
+        Newx(dub_ctx, 1, DNS__Unbound__Context);
+
+        *dub_ctx = (DNS__Unbound__Context) {
+            .ub_ctx = my_ctx,
+            .queries = newHV(),
+        };
+
+        RETVAL = dub_ctx;
     OUTPUT:
         RETVAL
 
-#endif
-
 void
-_destroy_context( dns_unbound_ub_ctx *ctx )
+DESTROY (DNS__Unbound__Context* dub_ctx)
     CODE:
+        _DEBUG("DESTROY context; time=%d\n", PL_phase);
 
-        // Workaround for https://github.com/NLnetLabs/unbound/issues/39:
-        ub_ctx_debugout(ctx, stderr);
+        ub_ctx_delete(dub_ctx->ub_ctx);
 
-        ub_ctx_delete(ctx);
+        SvREFCNT_dec((SV*) dub_ctx->queries);
+
+        Safefree(dub_ctx);

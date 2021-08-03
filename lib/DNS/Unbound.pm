@@ -162,7 +162,7 @@ Instantiates this class.
 
 sub new {
     return bless {
-        _ub => _create_context(),
+        _ub => DNS::Unbound::Context::create(),
         _pid => $$,
     }, shift();
 }
@@ -187,7 +187,7 @@ sub resolve {
 
     $type = _normalize_type_to_number($type);
 
-    my $result = _resolve( $_[0]->{'_ub'}, $_[1], $type, $_[3] || () );
+    my $result = $_[0]{'_ub'}->_resolve( $_[1], $type, $_[3] || () );
 
     if (!ref($result)) {
         die _create_resolve_error($result);
@@ -249,6 +249,10 @@ sub resolve_async {
 
     if (my $deferred_cr = $query_class->_DEFERRED_CR()) {
         $deferred = $deferred_cr->();
+
+        $res = sub { $deferred->resolve(@_) };
+        $rej = sub { $deferred->reject(@_) };
+
         $promise = $deferred->promise();
         bless $promise, $query_class;
     }
@@ -256,41 +260,21 @@ sub resolve_async {
         $promise = $query_class->new( sub { ($res, $rej) = @_ } );
     }
 
-    # This hash maintains the query state across all related promise objects.
-    # It must NOT contain $self, or else we’ll have a circular reference
-    # that will prevent this class’s DESTROY method from firing.
-    my %dns = (
-        res => $res,
-        rej => $rej,
-
-        deferred => $deferred,
-
-        ctx => $ctx,
-
-        # It’s important that this be the _same_ scalar as what XS gets.
-        # libunbound’s async callback will receive a pointer to this SV
-        # and populate it as appropriate.
-        value => undef,
-    );
-
-    my $async_ar = _resolve_async(
-        $ctx, $name, $type, $class,
-        $dns{'value'},
+    my $async_ar = $ctx->_resolve_async(
+        $name, $type, $class,
+        sub {
+            if (ref $_[0]) {
+                $res->(DNS::Unbound::Result->new(%{ $_[0] }));
+            }
+            else {
+                $rej->( _create_resolve_error($_[0]) );
+            }
+        },
     );
 
     if (my $err = $async_ar->[0]) {
         die _create_resolve_error($err);
     }
-
-    my $query_id = $async_ar->[1];
-
-    $_[0]->{'_queries_dns'}{ $query_id } = \%dns;
-    $_[0]->{'_queries_lookup'}{ $query_id } = undef;
-
-    # NB: If %dns referenced $query it would be a circular reference.
-    @dns{'id', 'queries_lookup'} = ($query_id, $_[0]->{'_queries_lookup'});
-
-    $promise->_set_dns(\%dns);
 
     return $promise;
 }
@@ -336,7 +320,7 @@ to work without issue.
 sub enable_threads {
     my ($self) = @_;
 
-    _ub_ctx_async( $self->{'_ub'}, 1 );
+    $self->{'_ub'}->_ub_ctx_async( 1 );
 
     return $self;
 }
@@ -377,7 +361,7 @@ instead.)
 =cut
 
 sub set_option {
-    my $err = _ub_ctx_set_option( $_[0]->{'_ub'}, "$_[1]:", $_[2] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_set_option( "$_[1]:", $_[2] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -394,7 +378,7 @@ Gets a configuration option’s value.
 =cut
 
 sub get_option {
-    my $got = _ub_ctx_get_option( $_[0]->{'_ub'}, $_[1] );
+    my $got = $_[0]->{'_ub'}->_ub_ctx_get_option( $_[1] );
 
     if (!ref($got)) {
         my $str = _get_error_string_from_number($got);
@@ -416,7 +400,7 @@ option regardless of whether the configuration is finalized.
 =cut
 
 sub debuglevel {
-    _ub_ctx_debuglevel( $_[0]{'_ub'}, $_[1] );
+    $_[0]{'_ub'}->_ub_ctx_debuglevel( $_[1] );
     return $_[0];
 }
 
@@ -438,7 +422,7 @@ sub debugout {
         die DNS::Unbound::X->create('BadDebugFD', $fd, $!);
     };
 
-    _ub_ctx_debugout( $self->{'_ub'}, $fd, $mode );
+    $self->{'_ub'}->_ub_ctx_debugout( $fd, $mode );
 
     return $self;
 }
@@ -469,7 +453,7 @@ Z<>
 =cut
 
 sub hosts {
-    my $err = _ub_ctx_hosts( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_hosts( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -480,7 +464,7 @@ sub hosts {
 }
 
 sub resolvconf {
-    my $err = _ub_ctx_resolvconf( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_resolvconf( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -508,7 +492,7 @@ Z<>
 =cut
 
 sub poll {
-    return _ub_poll( $_[0]->{'_ub'} );
+    return $_[0]->{'_ub'}->_ub_poll(  );
 }
 
 =head2 I<OBJ>->fd()
@@ -518,7 +502,7 @@ Z<>
 =cut
 
 sub fd {
-    return _ub_fd( $_[0]->{'_ub'} );
+    return $_[0]->{'_ub'}->_ub_fd();
 }
 
 =head2 I<OBJ>->wait()
@@ -528,9 +512,9 @@ Z<>
 =cut
 
 sub wait {
-    my $ret = _ub_wait( $_[0]->{'_ub'} );
+    my $ret = $_[0]->{'_ub'}->_ub_wait(  );
 
-    $_[0]->_check_promises();
+    #$_[0]->_check_promises();
 
     return $ret;
 }
@@ -542,9 +526,7 @@ Z<>
 =cut
 
 sub process {
-    my $ret = _ub_process( $_[0]->{'_ub'} );
-
-    $_[0]->_check_promises();
+    my $ret = $_[0]->{'_ub'}->_ub_process( );
 
     return $ret;
 }
@@ -557,6 +539,8 @@ Returns the number of outstanding asynchronous queries.
 
 sub count_pending_queries {
     my ($self) = @_;
+
+die 'TODO';
 
     return $self->{'_queries_lookup'} ? 0 + keys %{ $self->{'_queries_lookup'} } : 0;
 }
@@ -577,7 +561,7 @@ Z<>
 =cut
 
 sub add_ta {
-    my $err = _ub_ctx_add_ta( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -594,7 +578,7 @@ Z<>
 =cut
 
 sub add_ta_autr {
-    my $err = _ub_ctx_add_ta_autr( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta_autr( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -611,7 +595,7 @@ Z<>
 =cut
 
 sub add_ta_file {
-    my $err = _ub_ctx_add_ta_file( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta_file( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -628,7 +612,7 @@ Z<>
 =cut
 
 sub trustedkeys {
-    my $err = _ub_ctx_trustedkeys( $_[0]->{'_ub'}, $_[1] );
+    my $err = $_[0]->{'_ub'}->_ub_ctx_trustedkeys( $_[1] );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
@@ -640,40 +624,40 @@ sub trustedkeys {
 
 #----------------------------------------------------------------------
 
-sub _check_promises {
-    my ($self) = @_;
-
-    if ( my $asyncs_hr = $self->{'_queries_dns'} ) {
-        for my $dns_hr (values %$asyncs_hr) {
-            if (defined $dns_hr->{'value'}) {
-                delete $asyncs_hr->{ $dns_hr->{'id'} };
-                delete $self->{'_queries_lookup'}{ $dns_hr->{'id'} };
-
-                my ($succeeded, $settlement);
-
-                if ( ref $dns_hr->{'value'} ) {
-                    $succeeded = 1;
-                    $settlement = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
-                }
-                else {
-                    $settlement = _create_resolve_error($dns_hr->{'value'});
-                }
-
-                if (my $deferred = $dns_hr->{'deferred'}) {
-                    my $fn = $succeeded ? 'resolve' : 'reject';
-                    $deferred->$fn($settlement);
-                }
-
-                # Promise::ES6
-                else {
-                    $dns_hr->{$succeeded ? 'res' : 'rej'}->($settlement);
-                }
-            }
-        }
-    }
-
-    return;
-}
+#sub _check_promises {
+#    my ($self) = @_;
+#
+#    if ( my $asyncs_hr = $self->{'_queries_dns'} ) {
+#        for my $dns_hr (values %$asyncs_hr) {
+#            if (defined $dns_hr->{'value'}) {
+#                delete $asyncs_hr->{ $dns_hr->{'id'} };
+#                delete $self->{'_queries_lookup'}{ $dns_hr->{'id'} };
+#
+#                my ($succeeded, $settlement);
+#
+#                if ( ref $dns_hr->{'value'} ) {
+#                    $succeeded = 1;
+#                    $settlement = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
+#                }
+#                else {
+#                    $settlement = _create_resolve_error($dns_hr->{'value'});
+#                }
+#
+#                if (my $deferred = $dns_hr->{'deferred'}) {
+#                    my $fn = $succeeded ? 'resolve' : 'reject';
+#                    $deferred->$fn($settlement);
+#                }
+#
+#                # Promise::ES6
+#                else {
+#                    $dns_hr->{$succeeded ? 'res' : 'rej'}->($settlement);
+#                }
+#            }
+#        }
+#    }
+#
+#    return;
+#}
 
 #----------------------------------------------------------------------
 
@@ -730,22 +714,34 @@ sub decode_character_strings {
 
 #----------------------------------------------------------------------
 
+sub mydump {
+print "===== mydump\n";
+print "===== mydump (@_)\n";
+use Data::Dumper;
+print Dumper shift;
+}
+
 sub DESTROY {
     $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
         if ($$ == $_[0]->{'_pid'}) {
+
+            # If DESTROY fires at global destruction the internal libunbound
+            # context object might already have been garbage-collected, in
+            # which case we don’t want to try to clean up that object since
+            # it’ll throw an unhelpfully-worded “(in cleanup)” warning
+            # (as of perl 5.30, anyhow).
+            #
+            # It’s important that we call this BEFORE we clear out the
+            # queries hash because the XS code depends on Perl to keep
+            # the result’s SV alive. If we cleared out the queries first,
+            # there would be a window where, if our XS code resolved a
+            # promise, it would write to memory that *formerly* held our
+            # result SV but now holds something else.
+
             if (my $queries_hr = $_[0]->{'_queries_dns'}) {
                 %$queries_hr = ();
             }
         }
-
-        my $ub = delete $_[0]->{'_ub'};
-
-        # If DESTROY fires at global destruction the internal libunbound
-        # context object might already have been garbage-collected, in
-        # which case we don’t want to try to clean up that object since
-        # it’ll throw an unhelpfully-worded “(in cleanup)” warning
-        # (as of perl 5.30, anyhow).
-        _destroy_context($ub) if $ub;
 
         1;
     };

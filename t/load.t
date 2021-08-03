@@ -4,8 +4,10 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::FailWarnings;
 
 use Net::DNS::Parameters;
+use Net::DNS::Packet;
 
 use_ok('DNS::Unbound');
 
@@ -18,7 +20,7 @@ $Data::Dumper::Useqq = 1;
 
 my $dns = DNS::Unbound->new();
 
-eval {
+warn if !eval {
     my $result = $dns->resolve( 'cannot.exist.invalid', 'NS' );
 
     isa_ok( $result, 'DNS::Unbound::Result', 'resolve() response' );
@@ -91,6 +93,8 @@ eval {
         # chop off trailing “.”
         is( $ns_obj->nsdname(), substr( $data[0], 0, -1 ), 'nsdname() match' );
     }
+
+    1;
 };
 
 done_testing();
