@@ -477,14 +477,6 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
 
         int async_id = 0;
 
-        // A few different approaches were tried here, including passing
-        // coderefs to ub_resolve_async, but the one thing that seems to
-        // work is passing a pointer to the result SV, which the async
-        // callback then receives; that callback then populates the SV
-        // with either the result hashref (success) or the failure number.
-        // This does mean that it has to be Perl that checks for whether
-        // the result SV is populated--which seems to work just fine.
-
         dub_query_ctx_t* query_ctx;
         Newx(query_ctx, 1, dub_query_ctx_t);
 
@@ -501,13 +493,11 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
 
         if (reserr) {
             Safefree(query_ctx);
-            _unstore_query(aTHX_ ctx, async_id);
         }
         else {
             _store_query(aTHX_ ctx, query_ctx, async_id, callback);
             _DEBUG("New query ID: %d", async_id);
         }
-
 
         RETVAL = newRV_noinc((SV *)ret);
     OUTPUT:
@@ -569,9 +559,8 @@ void
 DESTROY (SV* self_sv)
     CODE:
         _DEBUG("%s", __func__);
-        UV uvptr = SvUV( SvRV(self_sv) );
 
-        dub_query_ctx_t* query_ctx = (void *) uvptr;
+        dub_query_ctx_t* query_ctx = _QueryContext_to_query_ctx(aTHX_ self_sv);
 
         if (getpid() == query_ctx->pid && PL_dirty) {
             warn("Freeing %" SVf " at global destruction; memory leak likely!", self_sv);

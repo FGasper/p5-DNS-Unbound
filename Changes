@@ -1,5 +1,11 @@
 Revision history for Perl module DNS::Unbound
 
+0.25
+- Make the C code not depend on the Perl for memory handling. Hopefully this
+  fixes some longstanding (and hard-to-reproduce) memory-handling nits, but
+  it’s also just much cleaner.
+- All tests now fail on warnings.
+
 0.24 Tue, 27 Jul 2021
 - BUG FIX: Several memory leaks from errantly-high reference counts.
 - Various tweaks for efficiency: pre-extend arrays, etc.

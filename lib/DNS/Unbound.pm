@@ -48,12 +48,14 @@ You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 
 =head1 DESCRIPTION
 
-This library is a Perl interface to NLNetLabs’s widely-used
-L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive DNS resolver.
+This library is a Perl interface to the libary component of NLNetLabs’s
+widely-used L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive
+DNS resolver.
 
 =head1 CHARACTER ENCODING
 
-All strings given to this module must be B<byte> B<strings>.
+DNS doesn’t know about character encodings, so neither does Unbound.
+Thus, all strings given to this module must be B<byte> B<strings>.
 All returned strings will be byte strings as well.
 
 =head1 EVENT LOOPS
@@ -64,7 +66,8 @@ out-of-the-box compatibility with those popular event loop interfaces.
 You should probably use one of these.
 
 You can also integrate with a custom event loop via the C<fd()> method
-of this class.
+of this class: wait for that file descriptor to be readable, then
+call this class’s C<perform()> method.
 
 =cut
 
@@ -768,7 +771,7 @@ sub _get_error_string_from_number {
 
 =head1 LICENSE & COPYRIGHT
 
-Copyright 2019 Gasper Software Consulting.
+Copyright 2019-2021 Gasper Software Consulting.
 
 This library is licensed under the same terms as Perl itself.
 
