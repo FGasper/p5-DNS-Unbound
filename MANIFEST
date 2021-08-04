@@ -36,7 +36,6 @@ t/convenience.t
 t/debuglevel.t
 t/debugout_badfd.t
 t/debugout_bug.t
-t/destruct.t
 t/hosts.t
 t/ioasync.t
 t/load.t

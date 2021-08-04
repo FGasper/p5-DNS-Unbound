@@ -598,7 +598,7 @@ sub add_ta {
     return $self;
 }
 
-=head2 I<OBJ>->add_ta_autr()
+=head2 I<OBJ>->add_ta_autr( $PATH )
 
 Z<>
 
@@ -617,7 +617,7 @@ sub add_ta_autr {
     return $self;
 }
 
-=head2 I<OBJ>->add_ta_file()
+=head2 I<OBJ>->add_ta_file( $PATH )
 
 Z<>
 
@@ -636,7 +636,7 @@ sub add_ta_file {
     return $self;
 }
 
-=head2 I<OBJ>->trustedkeys()
+=head2 I<OBJ>->trustedkeys( $PATH )
 
 Z<>
 

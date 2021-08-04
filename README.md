@@ -100,9 +100,6 @@ already been sent.
 
 Returns _OBJ_.
 
-**NOTE:** Despite Perl’s iffy relationship with threads, this appears
-to work without issue.
-
 ## _OBJ_->set\_option( $NAME => $VALUE )
 
 Sets a configuration option. Returns _OBJ_.
@@ -184,19 +181,19 @@ and will only work if the underlying libunbound version supports them.
 
 They return _OBJ_ and throw errors on failure.
 
-## _OBJ_->add\_ta()
+## _OBJ_->add\_ta( $TA )
 
 
 
-## _OBJ_->add\_ta\_autr()
+## _OBJ_->add\_ta\_autr( $PATH )
 
 
 
-## _OBJ_->add\_ta\_file()
+## _OBJ_->add\_ta\_file( $PATH )
 
 
 
-## _OBJ_->trustedkeys()
+## _OBJ_->trustedkeys( $PATH )
 
 
 
