@@ -20,6 +20,9 @@ $Data::Dumper::Useqq = 1;
 
 my $dns = DNS::Unbound->new();
 
+# Setting to 0 also works but is undocumented.
+$dns->set_option( 'cache-max-ttl' => 0x7fff_ffff );
+
 warn if !eval {
     my $result = $dns->resolve( 'cannot.exist.invalid', 'NS' );
 
