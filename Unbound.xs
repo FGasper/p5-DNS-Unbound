@@ -53,6 +53,9 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
             warn("Freeing DNS::Unbound::Context instance at global destruction; memory leak likely!");
         }
 
+        // Workaround for https://github.com/NLnetLabs/unbound/issues/39:
+        ub_ctx_debugout(dub_ctx->ub_ctx, stderr);
+
         ub_ctx_delete(dub_ctx->ub_ctx);
         dub_ctx->ub_ctx = NULL;
 

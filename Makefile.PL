@@ -262,6 +262,7 @@ WriteMakefile(
     AUTHOR         => 'Felipe Gasper (FELIPE)',
     CCFLAGS        => join(
         q< >,
+        $Config{'ccflags'},
         $cflags,
         '-Wall',
         '-std=c99',
