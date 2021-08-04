@@ -87,7 +87,7 @@ our ($VERSION);
 
 BEGIN {
     $VERSION = '0.24';
-    XSLoader::load();
+    XSLoader::load( __PACKAGE__, $VERSION );
 }
 
 # Retain this to avoid having to load Net::DNS::Parameters
