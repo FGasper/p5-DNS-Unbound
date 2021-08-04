@@ -454,7 +454,6 @@ int
 _ub_cancel( DNS__Unbound__Context* ctx, int async_id )
     CODE:
         int result = ub_cancel(ctx->ub_ctx, async_id);
-    fprintf(stderr, "cancel: %d\n", result);
 
         if (!result) {
             _unstore_query(aTHX_ ctx, async_id);
