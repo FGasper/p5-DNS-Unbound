@@ -39,12 +39,14 @@ You can also integrate with a custom event loop; see ["EVENT LOOPS"](#event-loop
 
 # DESCRIPTION
 
-This library is a Perl interface to NLNetLabs’s widely-used
-[Unbound](https://nlnetlabs.nl/projects/unbound/) recursive DNS resolver.
+This library is a Perl interface to the libary component of NLNetLabs’s
+widely-used [Unbound](https://nlnetlabs.nl/projects/unbound/) recursive
+DNS resolver.
 
 # CHARACTER ENCODING
 
-All strings given to this module must be **byte** **strings**.
+DNS doesn’t know about character encodings, so neither does Unbound.
+Thus, all strings given to this module must be **byte** **strings**.
 All returned strings will be byte strings as well.
 
 # EVENT LOOPS
@@ -55,7 +57,8 @@ out-of-the-box compatibility with those popular event loop interfaces.
 You should probably use one of these.
 
 You can also integrate with a custom event loop via the `fd()` method
-of this class.
+of this class: wait for that file descriptor to be readable, then
+call this class’s `perform()` method.
 
 # METHODS
 
@@ -224,7 +227,7 @@ returned as an array reference. Useful for `TXT` query results.
 
 # LICENSE & COPYRIGHT
 
-Copyright 2019 Gasper Software Consulting.
+Copyright 2019-2021 Gasper Software Consulting.
 
 This library is licensed under the same terms as Perl itself.
 

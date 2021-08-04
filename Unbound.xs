@@ -63,9 +63,9 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
 }
 
 static dub_query_ctx_t* _QueryContext_to_query_ctx (pTHX_ SV* qc_sv) {
-    UV uvptr = SvUV( SvRV(qc_sv) );
+    uintptr_t uptr = SvUV( SvRV(qc_sv) );
 
-    return (void *) uvptr;
+    return (void *) uptr;
 }
 
 // ----------------------------------------------------------------------
