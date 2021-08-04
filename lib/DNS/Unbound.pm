@@ -187,11 +187,13 @@ to use C<resolve_async()> instead.
 =cut
 
 sub resolve {
-    my $type = $_[2] || die 'Need type!';
+    my ($self, $name, $type, $class) = @_;
+
+    die 'Need type!' if !$type;
 
     $type = _normalize_type_to_number($type);
 
-    my $result = $_[0]{'_ub'}->_resolve( $_[1], $type, $_[3] || () );
+    my $result = $self->{'_ub'}->_resolve( $name, $type, $class || () );
 
     if ( !ref($result) ) {
         die _create_resolve_error($result);
@@ -239,17 +241,19 @@ for the methods you’ll need to use in tandem with this one.
 =cut
 
 sub resolve_async {
-    my $type = $_[2] || die 'Need type!';
-    $type = $type = _normalize_type_to_number($type);
+    my ($self, $name, $type, $class) = @_;
 
-    # Prevent memory leaks.
-    my $ctx   = $_[0]->{'_ub'};
-    my $name  = $_[1];
-    my $class = $_[3] || 1;
+    die 'Need type!' if !$type;
+
+    $type = _normalize_type_to_number($type);
+
+    $class ||= 1;
+
+    my $ctx = $self->{'_ub'};
 
     my ( $promise, $res, $rej, $deferred );
 
-    my $query_class = $_[0]->_load_asyncquery_if_needed();
+    my $query_class = $self->_load_asyncquery_if_needed();
 
     if ( my $deferred_cr = $query_class->_DEFERRED_CR() ) {
         $deferred = $deferred_cr->();
@@ -264,6 +268,8 @@ sub resolve_async {
         $promise = $query_class->new( sub { ( $res, $rej ) = @_ } );
     }
 
+    # We have to store this with the promise chain so that
+    # the query can be canceled.
     my %dns = (
         ctx => $ctx,
         fulfilled => 0,
@@ -274,13 +280,15 @@ sub resolve_async {
     my $async_ar = $ctx->_resolve_async(
         $name, $type, $class,
         sub {
+            my ($payload) = @_;
+
             $$fulfilled_sr = 1;
 
-            if ( ref $_[0] ) {
-                $res->( DNS::Unbound::Result->new( %{ $_[0] } ) );
+            if ( ref $payload ) {
+                $res->( DNS::Unbound::Result->new( %$payload ) );
             }
             else {
-                $rej->( _create_resolve_error( $_[0] ) );
+                $rej->( _create_resolve_error( $payload ) );
             }
         },
     );
@@ -329,9 +337,6 @@ already been sent.
 
 Returns I<OBJ>.
 
-B<NOTE:> Despite Perl’s iffy relationship with threads, this appears
-to work without issue.
-
 =cut
 
 sub enable_threads {
@@ -378,14 +383,16 @@ instead.)
 =cut
 
 sub set_option {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_set_option( "$_[1]:", $_[2] );
+    my ($self, $name, $value) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_set_option( "$name:", $value );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
-        die "Failed to set “$_[1]” option ($_[2]): $str";
+        die "Failed to set “$name” option ($value): $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 =head2 $value = I<OBJ>->get_option( $NAME )
@@ -395,11 +402,13 @@ Gets a configuration option’s value.
 =cut
 
 sub get_option {
-    my $got = $_[0]->{'_ub'}->_ub_ctx_get_option( $_[1] );
+    my ($self, $name) = @_;
+
+    my $got = $self->{'_ub'}->_ub_ctx_get_option( $name );
 
     if ( !ref($got) ) {
         my $str = _get_error_string_from_number($got);
-        die "Failed to get “$_[1]” option: $str";
+        die "Failed to get “$name” option: $str";
     }
 
     return $$got;
@@ -417,8 +426,11 @@ option regardless of whether the configuration is finalized.
 =cut
 
 sub debuglevel {
-    $_[0]{'_ub'}->_ub_ctx_debuglevel( $_[1] );
-    return $_[0];
+    my ($self, $level) = @_;
+
+    $self->{'_ub'}->_ub_ctx_debuglevel( $level );
+
+    return $self;
 }
 
 =head2 I<OBJ>->debugout( $FD_OR_FH )
@@ -470,25 +482,29 @@ Z<>
 =cut
 
 sub hosts {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_hosts( $_[1] );
+    my ($self, $path) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_hosts( $path );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to set hosts file: $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 sub resolvconf {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_resolvconf( $_[1] );
+    my ($self, $path) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_resolvconf( $path );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to set stub nameservers: $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 #----------------------------------------------------------------------
@@ -529,11 +545,7 @@ Z<>
 =cut
 
 sub wait {
-    my $ret = $_[0]->{'_ub'}->_ub_wait();
-
-    #$_[0]->_check_promises();
-
-    return $ret;
+    return $_[0]->{'_ub'}->_ub_wait();
 }
 
 =head2 I<OBJ>->process()
@@ -543,9 +555,7 @@ Z<>
 =cut
 
 sub process {
-    my $ret = $_[0]->{'_ub'}->_ub_process();
-
-    return $ret;
+    return $_[0]->{'_ub'}->_ub_process();
 }
 
 =head2 I<OBJ>->count_pending_queries()
@@ -569,21 +579,23 @@ and will only work if the underlying libunbound version supports them.
 
 They return I<OBJ> and throw errors on failure.
 
-=head2 I<OBJ>->add_ta()
+=head2 I<OBJ>->add_ta( $TA )
 
 Z<>
 
 =cut
 
 sub add_ta {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta( $_[1] );
+    my ($self, $ta) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_add_ta( $ta );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to add trust anchor: $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 =head2 I<OBJ>->add_ta_autr()
@@ -593,14 +605,16 @@ Z<>
 =cut
 
 sub add_ta_autr {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta_autr( $_[1] );
+    my ($self, $path) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_add_ta_autr( $path );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to add managed trust anchor file: $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 =head2 I<OBJ>->add_ta_file()
@@ -610,14 +624,16 @@ Z<>
 =cut
 
 sub add_ta_file {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_add_ta_file( $_[1] );
+    my ($self, $path) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_add_ta_file( $path );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to add zone-style trust anchor file: $str";
     }
 
-    return $_[0];
+    return $self;
 }
 
 =head2 I<OBJ>->trustedkeys()
@@ -627,52 +643,17 @@ Z<>
 =cut
 
 sub trustedkeys {
-    my $err = $_[0]->{'_ub'}->_ub_ctx_trustedkeys( $_[1] );
+    my ($self, $path) = @_;
+
+    my $err = $self->{'_ub'}->_ub_ctx_trustedkeys( $path );
 
     if ($err) {
         my $str = _get_error_string_from_number($err);
         die "Failed to add BIND-style trust anchor file: $str";
     }
 
-    return $_[0];
+    return $self;
 }
-
-#----------------------------------------------------------------------
-
-#sub _check_promises {
-#    my ($self) = @_;
-#
-#    if ( my $asyncs_hr = $self->{'_queries_dns'} ) {
-#        for my $dns_hr (values %$asyncs_hr) {
-#            if (defined $dns_hr->{'value'}) {
-#                delete $asyncs_hr->{ $dns_hr->{'id'} };
-#                delete $self->{'_queries_lookup'}{ $dns_hr->{'id'} };
-#
-#                my ($succeeded, $settlement);
-#
-#                if ( ref $dns_hr->{'value'} ) {
-#                    $succeeded = 1;
-#                    $settlement = DNS::Unbound::Result->new( %{ $dns_hr->{'value'} } );
-#                }
-#                else {
-#                    $settlement = _create_resolve_error($dns_hr->{'value'});
-#                }
-#
-#                if (my $deferred = $dns_hr->{'deferred'}) {
-#                    my $fn = $succeeded ? 'resolve' : 'reject';
-#                    $deferred->$fn($settlement);
-#                }
-#
-#                # Promise::ES6
-#                else {
-#                    $dns_hr->{$succeeded ? 'res' : 'rej'}->($settlement);
-#                }
-#            }
-#        }
-#    }
-#
-#    return;
-#}
 
 #----------------------------------------------------------------------
 
@@ -725,34 +706,6 @@ returned as an array reference. Useful for C<TXT> query results.
 sub decode_character_strings {
     shift if ( ref $_[0] ) && ( ref $_[0] )->isa(__PACKAGE__);
     return [ unpack( '(C/a)*', $_[0] ) ];
-}
-
-#----------------------------------------------------------------------
-
-sub DESTROY {
-    $_[0]->{'_destroyed'} ||= $_[0]->{'_ub'} && do {
-        if ( $$ == $_[0]->{'_pid'} ) {
-
-            # If DESTROY fires at global destruction the internal libunbound
-            # context object might already have been garbage-collected, in
-            # which case we don’t want to try to clean up that object since
-            # it’ll throw an unhelpfully-worded “(in cleanup)” warning
-            # (as of perl 5.30, anyhow).
-            #
-            # It’s important that we call this BEFORE we clear out the
-            # queries hash because the XS code depends on Perl to keep
-            # the result’s SV alive. If we cleared out the queries first,
-            # there would be a window where, if our XS code resolved a
-            # promise, it would write to memory that *formerly* held our
-            # result SV but now holds something else.
-
-            if ( my $queries_hr = $_[0]->{'_queries_dns'} ) {
-                %$queries_hr = ();
-            }
-        }
-
-        1;
-    };
 }
 
 #----------------------------------------------------------------------
