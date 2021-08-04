@@ -6,6 +6,7 @@ Revision history for Perl module DNS::Unbound
   it’s also just much cleaner.
 - We now honour $Config{'ccflags'} when building the module. (This broke
   at some point on 32-bit RaspiOS.)
+- Fix t/load.t for long TTLs. (Unbound’s default interfered.)
 - All tests now fail on warnings.
 
 0.24 Tue, 27 Jul 2021
