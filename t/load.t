@@ -81,7 +81,7 @@ warn if !eval {
 
         isa_ok( $ns_obj, 'Net::DNS::RR::NS', 'parse answer_packet() result' );
 
-        is( $ns_obj->ttl(), $result->ttl(), 'ttl() match' );
+        is( $ns_obj->ttl(), $result->ttl(), 'ttl() match' ) or diag explain $result;
         is( $ns_obj->ttl(), $result->{ttl}, '{ttl} match' );
 
         is( $ns_obj->class(), 'IN', 'class() match' );
