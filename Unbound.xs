@@ -65,11 +65,7 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     }
 }
 
-static dub_query_ctx_t* _QueryContext_to_query_ctx (pTHX_ SV* qc_sv) {
-    uintptr_t uptr = SvUV( SvRV(qc_sv) );
-
-    return (void *) uptr;
-}
+#define _QueryContext_to_query_ctx(qc_sv) ( (void *) SvUV( SvRV(qc_sv) ) )
 
 // ----------------------------------------------------------------------
 
@@ -108,7 +104,7 @@ static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int asyn
 
     _DEBUG("end %s %p %d", __func__, ctx, async_id);
 
-    return (void *) _QueryContext_to_query_ctx(aTHX_ *entry);
+    return (void *) _QueryContext_to_query_ctx(*entry);
 }
 
 static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
@@ -566,7 +562,7 @@ DESTROY (SV* self_sv)
     CODE:
         _DEBUG("%s", __func__);
 
-        dub_query_ctx_t* query_ctx = _QueryContext_to_query_ctx(aTHX_ self_sv);
+        dub_query_ctx_t* query_ctx = _QueryContext_to_query_ctx(self_sv);
 
         if (getpid() == query_ctx->pid && PL_dirty) {
             warn("Freeing %" SVf " at global destruction; memory leak likely!", self_sv);
