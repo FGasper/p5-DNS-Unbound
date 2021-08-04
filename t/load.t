@@ -85,12 +85,18 @@ warn if !eval {
 
         isa_ok( $ns_obj, 'Net::DNS::RR::NS', 'parse answer_packet() result' );
 
-        is( $ns_obj->ttl(), $result->ttl(), 'ttl() match' ) or diag explain [
-            $result,
-            $net_dns_packet,
-        ];
+      SKIP: {
+            if (!$result->ttl()) {
+                skip 'No TTL in Unbound result (probably an old Unbound)', 2;
+            }
 
-        is( $ns_obj->ttl(), $result->{ttl}, '{ttl} match' );
+            is( $ns_obj->ttl(), $result->ttl(), 'ttl() match' ) or diag explain [
+                $result,
+                $net_dns_packet,
+            ];
+
+            is( $ns_obj->ttl(), $result->{ttl}, '{ttl} match' );
+        }
 
         is( $ns_obj->class(), 'IN', 'class() match' );
         is( $ns_obj->type(), 'NS', 'type() match' );
