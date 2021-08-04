@@ -50,7 +50,7 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
         _DEBUG("Freeing DNS__Unbound__Context");
 
         if (getpid() == dub_ctx->pid && PL_dirty) {
-            warn("Freeing DNS::Unbound::Context instance at global destruction; memory leak likely!");
+            warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
         }
 
         // Workaround for https://github.com/NLnetLabs/unbound/issues/39:

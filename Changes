@@ -1,11 +1,12 @@
 Revision history for Perl module DNS::Unbound
 
 0.25
-- Make the C code not depend on the Perl for memory handling. Hopefully this
-  fixes some longstanding (and hard-to-reproduce) memory-handling nits, but
-  it’s also just much cleaner.
-- We now honour $Config{'ccflags'} when building the module. (This broke
-  at some point on 32-bit RaspiOS.)
+- BUG FIX: Make the C code not depend on (pure) Perl for memory handling.
+  This intends to fix some longstanding (and hard-to-reproduce)
+  memory-handling nits, but it’s also just much cleaner besides.
+- BUG FIX: We now honour $Config{'ccflags'} when building the module.
+  (This broke at some point on 32-bit RaspiOS.)
+- Objects now warn() on DESTROY at global destruction.
 - Fix t/load.t for long TTLs. Unbound’s default was 86400, so responses
   that had longer TTLs caused a conflict between Net::DNS’s parse and
   Unbound’s response.
