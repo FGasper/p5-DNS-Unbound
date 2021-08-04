@@ -6,9 +6,18 @@ use warnings;
 use Test::More;
 use Test::FailWarnings;
 
-for my $mod ( qw( Mojo::Promise  Mojo::IOLoop ) ) {
-    eval "require $mod" or plan skip_all => "No $mod: $@";
+for my $mod ( qw( Mojolicious Mojo::Promise Mojo::IOLoop ) ) {
+
+    # In some older Mojo versions a spurious warning happens when you
+    # load successive Mojo modules.
+    # http://www.cpantesters.org/cpan/report/8c3f856a-f4e9-11eb-9602-c4651f24ea8f
+    #
+    if (!$mod->can('new')) {
+        eval "require $mod" or plan skip_all => "No $mod: $@";
+    }
 }
+
+diag "Using Mojolicious $Mojolicious::VERSION";
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
