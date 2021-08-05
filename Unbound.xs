@@ -18,9 +18,13 @@
 #define NEED_THX 0
 #endif
 
-#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str "\n", ##__VA_ARGS__);
-
 #define _MY_PL_phase_name (PL_phase_names[PL_phase])
+
+#ifdef PL_phase
+#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (phase=%s)\n", ##__VA_ARGS__, _MY_PL_phase_name);
+#else
+#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);
+#endif
 
 typedef struct {
     pid_t pid;
@@ -47,12 +51,12 @@ typedef struct {
 
 #define _increment_dub_ctx_refcount(ctx) STMT_START { \
     ctx->refcount++;    \
-    _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d; phase=%s)", __func__, ctx, ctx->refcount, _MY_PL_phase_name); \
+    _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d)", __func__, ctx, ctx->refcount); \
 } STMT_END
 
 static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     if (!--dub_ctx->refcount) {
-        _DEBUG("Freeing DNS__Unbound__Context %p (phase=%s)", dub_ctx, _MY_PL_phase_name);
+        _DEBUG("Freeing DNS__Unbound__Context %p", dub_ctx);
 
         if ((getpid() == dub_ctx->pid) && PL_dirty) {
             warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
@@ -69,7 +73,7 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
         Safefree(dub_ctx);
     }
     else {
-        _DEBUG("DNS__Unbound__Context %p dec refcount (now %d; phase=%s)", dub_ctx, dub_ctx->refcount, _MY_PL_phase_name);
+        _DEBUG("DNS__Unbound__Context %p dec refcount (now %d)", dub_ctx, dub_ctx->refcount);
     }
 }
 
@@ -133,7 +137,7 @@ static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
 
 // ----------------------------------------------------------------------
 
-SV* _ub_result_to_svhv_and_free (struct ub_result* result) {
+SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
 
     AV *data = newAV();
     unsigned datasize = 0;
@@ -215,7 +219,7 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
         result_sv = newSViv(err);
     }
     else {
-        result_sv = _ub_result_to_svhv_and_free(result);
+        result_sv = _ub_result_to_svhv_and_free(aTHX_ result);
     }
 
     SV* callback = _unstore_query(aTHX_ query_ctx->ctx, query_ctx->id );
@@ -521,7 +525,7 @@ _resolve( DNS__Unbound__Context* ctx, SV *name, int type, int class = 1 )
             RETVAL = newSViv(retval);
         }
         else {
-            RETVAL = _ub_result_to_svhv_and_free(result);
+            RETVAL = _ub_result_to_svhv_and_free(aTHX_ result);
         }
 
     OUTPUT:
