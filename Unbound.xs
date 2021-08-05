@@ -10,7 +10,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 0
+#define DEBUG 1
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1
@@ -49,7 +49,7 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     if (!--dub_ctx->refcount) {
         _DEBUG("Freeing DNS__Unbound__Context");
 
-        if (getpid() == dub_ctx->pid && PL_dirty) {
+        if ((getpid() == dub_ctx->pid) && PL_dirty) {
             warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
         }
 
@@ -546,7 +546,7 @@ void
 DESTROY (DNS__Unbound__Context* dub_ctx)
     CODE:
 #ifdef PL_phase
-        _DEBUG("DESTROY context; time=%d\n", PL_phase);
+        _DEBUG("DESTROY context; phase=%s\n", PL_phase_names[PL_phase]);
 #else
         _DEBUG("DESTROY context; destruct? %d\n", PL_dirty);
 #endif
@@ -564,7 +564,7 @@ DESTROY (SV* self_sv)
 
         dub_query_ctx_t* query_ctx = _QueryContext_to_query_ctx(self_sv);
 
-        if (getpid() == query_ctx->pid && PL_dirty) {
+        if ((getpid() == query_ctx->pid) && PL_dirty) {
             warn("Freeing %" SVf " at global destruction; memory leak likely!", self_sv);
         }
 

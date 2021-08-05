@@ -60,6 +60,12 @@ You can also integrate with a custom event loop via the `fd()` method
 of this class: wait for that file descriptor to be readable, then
 call this class’s `perform()` method.
 
+# MEMORY LEAK DETECTION
+
+Objects in this namespace will, if left alive at global destruction,
+throw a warning about memory leaks. To silence these warnings, either
+allow all queries to complete, or cancel queries you no longer care about.
+
 # METHODS
 
 ## _CLASS_->new()
