@@ -6,6 +6,7 @@ Revision history for Perl module DNS::Unbound
   memory-handling nits, but it’s also just much cleaner besides.
 - BUG FIX: We now honour $Config{'ccflags'} when building the module.
   (This broke at some point on 32-bit RaspiOS.)
+- BUG FIX: DNS::Unbound::Mojo no longer tight-loops.
 - BUG FIX: DNS::Unbound::Mojo now removes itself from Mojo’s reactor at
   DESTROY time; previously it neglected this cleanup step.
 - Fix t/load.t:

@@ -66,7 +66,7 @@ sub new {
     Mojo::IOLoop->singleton()->reactor()->io(
         $fh,
         $self->_create_process_cr(),
-    );
+    )->watch($fh, 1, 0);
 
     $INSTANCE_HANDLE{$self} = $fh;
 
