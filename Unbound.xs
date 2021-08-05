@@ -557,11 +557,7 @@ create()
 void
 DESTROY (DNS__Unbound__Context* dub_ctx)
     CODE:
-#ifdef PL_phase
-        _DEBUG("DESTROY context; phase=%s\n", PL_phase_names[PL_phase]);
-#else
-        _DEBUG("DESTROY context; destruct? %d\n", PL_dirty);
-#endif
+        _DEBUG("%s", __func__);
 
         _decrement_dub_ctx_refcount(aTHX_ dub_ctx);
 
