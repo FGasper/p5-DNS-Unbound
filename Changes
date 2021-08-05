@@ -6,13 +6,16 @@ Revision history for Perl module DNS::Unbound
   memory-handling nits, but it’s also just much cleaner besides.
 - BUG FIX: We now honour $Config{'ccflags'} when building the module.
   (This broke at some point on 32-bit RaspiOS.)
-- Objects now warn() on DESTROY at global destruction.
+- BUG FIX: DNS::Unbound::Mojo now removes itself from Mojo’s reactor at
+  DESTROY time; previously it neglected this cleanup step.
 - Fix t/load.t:
     - The test now runs to completion rather than silently failing.
     - The test now accommodates old Unbounds that lack `ttl`.
     - Long TTLs. Unbound’s default was 86400, so responses
       that had longer TTLs caused a conflict between Net::DNS’s parse
       and Unbound’s response.
+- Objects now warn() on DESTROY at global destruction. This helps to
+  identify memory leaks.
 - Internal style improvements.
 - All tests now fail on warnings.
 

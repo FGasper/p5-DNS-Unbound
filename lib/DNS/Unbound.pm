@@ -69,6 +69,12 @@ You can also integrate with a custom event loop via the C<fd()> method
 of this class: wait for that file descriptor to be readable, then
 call this class’s C<perform()> method.
 
+=head1 MEMORY LEAK DETECTION
+
+Objects in this namespace will, if left alive at global destruction,
+throw a warning about memory leaks. To silence these warnings, either
+allow all queries to complete, or cancel queries you no longer care about.
+
 =cut
 
 #----------------------------------------------------------------------
@@ -558,6 +564,11 @@ sub process {
     return $_[0]->{'_ub'}->_ub_process();
 }
 
+sub _create_process_cr {
+    my $ctx = $_[0]->{'_ub'};
+    return sub { $ctx->_ub_process() };
+}
+
 =head2 I<OBJ>->count_pending_queries()
 
 Returns the number of outstanding asynchronous queries.
@@ -709,6 +720,19 @@ sub decode_character_strings {
 }
 
 #----------------------------------------------------------------------
+
+sub DESTROY {
+    my $self = shift;
+
+    if ($$ != $self->{'_pid'}) {
+        my $is_gd = ${^GLOBAL_PHASE};
+        $is_gd &&= ($is_gd eq 'DESTRUCT');
+
+        if ($is_gd) {
+            warn "$self DESTROYed at global destruction; memory leak likely!";
+        }
+    }
+}
 
 sub _get_error_string_from_number {
     my ($err) = @_;
