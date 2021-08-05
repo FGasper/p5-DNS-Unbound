@@ -20,6 +20,8 @@
 
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str "\n", ##__VA_ARGS__);
 
+#define _MY_PL_phase_name (PL_phase_names[PL_phase])
+
 typedef struct {
     pid_t pid;
     struct ub_ctx* ub_ctx;
@@ -43,11 +45,14 @@ typedef struct {
 
 // ----------------------------------------------------------------------
 
-#define _increment_dub_ctx_refcount(ctx) ctx->refcount++;
+#define _increment_dub_ctx_refcount(ctx) STMT_START { \
+    ctx->refcount++;    \
+    _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d; phase=%s)", __func__, ctx, ctx->refcount, _MY_PL_phase_name); \
+} STMT_END
 
 static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     if (!--dub_ctx->refcount) {
-        _DEBUG("Freeing DNS__Unbound__Context");
+        _DEBUG("Freeing DNS__Unbound__Context %p (phase=%s)", dub_ctx, _MY_PL_phase_name);
 
         if ((getpid() == dub_ctx->pid) && PL_dirty) {
             warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
@@ -62,6 +67,9 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
         SvREFCNT_dec((SV*) dub_ctx->queries);
 
         Safefree(dub_ctx);
+    }
+    else {
+        _DEBUG("DNS__Unbound__Context %p dec refcount (now %d; phase=%s)", dub_ctx, dub_ctx->refcount, _MY_PL_phase_name);
     }
 }
 
