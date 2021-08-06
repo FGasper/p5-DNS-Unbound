@@ -18,7 +18,9 @@
 #define NEED_THX 0
 #endif
 
-#if PERL_VERSION_GE(5, 14, 0)
+#define _PERL_HAS_PL_PHASE (PERL_VERSION_GE(5, 14, 0))
+
+#if _PERL_HAS_PL_PHASE
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (phase=%s)\n", ##__VA_ARGS__, PL_phase_names[PL_phase]);
 #else
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);
