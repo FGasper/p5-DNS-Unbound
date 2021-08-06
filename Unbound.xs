@@ -2,6 +2,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#include "ppport.h"
+
 #include <unbound.h>    /* unbound API */
 #include <unistd.h>
 #include <fcntl.h>
@@ -233,12 +235,10 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     PUSHMARK(SP);
     EXTEND(SP, 1);
     mPUSHs(result_sv);
-    //mPUSHs(newSVuv(42));
     PUTBACK;
 
     // Nothing should croak here:
     call_sv(callback, G_VOID | G_DISCARD);
-_DEBUG("after callback");
 
     FREETMPS;
     LEAVE;
