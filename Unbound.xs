@@ -60,12 +60,11 @@ typedef struct {
 #define my_get_blessedstruct_ptr(svrv) ( (void *) SvPVX( SvRV(svrv) ) )
 
 SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
-    const char dummy[size];
 
     SV* reference = newSV(0);
     SV* referent = newSVrv(reference, classname);
 
-    sv_setpvn(referent, dummy, size);
+    sv_grow(referent, size);
 
     return reference;
 }
