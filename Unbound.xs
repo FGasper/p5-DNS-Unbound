@@ -18,10 +18,8 @@
 #define NEED_THX 0
 #endif
 
-#define _MY_PL_phase_name (PL_phase_names[PL_phase])
-
-#ifdef PL_phase
-#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (phase=%s)\n", ##__VA_ARGS__, _MY_PL_phase_name);
+#if PERL_VERSION_GE(5, 14, 0)
+#define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (phase=%s)\n", ##__VA_ARGS__, PL_phase_names[PL_phase]);
 #else
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);
 #endif
