@@ -61,10 +61,11 @@ typedef struct {
 
 SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
 
-    SV* reference = newSV(0);
-    SV* referent = newSVrv(reference, classname);
+    SV* referent = newSV(size);
+    SvPOK_on(referent);
 
-    sv_grow(referent, size);
+    SV* reference = newRV_noinc(referent);
+    sv_bless(reference, gv_stashpv(classname, FALSE));
 
     return reference;
 }
