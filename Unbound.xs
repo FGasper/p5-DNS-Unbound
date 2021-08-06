@@ -120,8 +120,6 @@ static void _store_query (pTHX_ DNS__Unbound__Context* ctx, SV* blessedstruct, i
 
     const char* id_str = _query_id_str(async_id);
 
-    sv_dump(blessedstruct);
-
     hv_store(ctx->queries, id_str, strlen(id_str), blessedstruct, 0);
 }
 
