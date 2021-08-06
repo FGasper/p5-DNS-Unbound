@@ -51,7 +51,7 @@ typedef struct {
 
 // ----------------------------------------------------------------------
 
-// “Blessed structs” are an SVPV that stores a C struct, wrapped in a
+// A “blessed struct” is an SVPV that stores a C struct, wrapped in a
 // reference SV with a bless(). This allows Perl itself to do the
 // allocating and freeing of the struct, which simplfies memory management.
 
