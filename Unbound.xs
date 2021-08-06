@@ -51,6 +51,27 @@ typedef struct {
 
 // ----------------------------------------------------------------------
 
+// “Blessed structs” are an SVPV that stores a C struct, wrapped in a
+// reference SV with a bless(). This allows Perl itself to do the
+// allocating and freeing of the struct, which simplfies memory management.
+
+#define my_new_blessedstruct(type, classname) _my_new_blessedstruct_f(aTHX_ sizeof(type), classname)
+
+#define my_get_blessedstruct_ptr(svrv) ( (void *) SvPVX( SvRV(svrv) ) )
+
+SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
+    const char dummy[size];
+
+    SV* reference = newSV(0);
+    SV* referent = newSVrv(reference, classname);
+
+    sv_setpvn(referent, dummy, size);
+
+    return reference;
+}
+
+// ----------------------------------------------------------------------
+
 #define _increment_dub_ctx_refcount(ctx) STMT_START { \
     ctx->refcount++;    \
     _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d)", __func__, ctx, ctx->refcount); \
@@ -71,21 +92,19 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
         dub_ctx->ub_ctx = NULL;
 
         SvREFCNT_dec((SV*) dub_ctx->queries);
-
-        Safefree(dub_ctx);
     }
     else {
         _DEBUG("DNS__Unbound__Context %p dec refcount (now %d)", dub_ctx, dub_ctx->refcount);
     }
 }
 
-#define _QueryContext_to_query_ctx(qc_sv) ( (void *) SvUV( SvRV(qc_sv) ) )
-
 // ----------------------------------------------------------------------
 
 #define _query_id_str(async_id) form("%d", async_id)
 
-static dub_query_ctx_t* _store_query (pTHX_ DNS__Unbound__Context* ctx, dub_query_ctx_t* query_ctx, int async_id, SV* callback) {
+static void _store_query (pTHX_ DNS__Unbound__Context* ctx, SV* blessedstruct, int async_id, SV* callback) {
+
+    dub_query_ctx_t* query_ctx = my_get_blessedstruct_ptr(blessedstruct);
 
     *query_ctx = (dub_query_ctx_t) {
 #if NEED_THX
@@ -101,10 +120,9 @@ static dub_query_ctx_t* _store_query (pTHX_ DNS__Unbound__Context* ctx, dub_quer
 
     const char* id_str = _query_id_str(async_id);
 
-    SV* val = sv_setref_uv(newSV(0), "DNS::Unbound::QueryContext", PTR2UV(query_ctx));
-    hv_store(ctx->queries, id_str, strlen(id_str), val, 0);
+    sv_dump(blessedstruct);
 
-    return query_ctx;
+    hv_store(ctx->queries, id_str, strlen(id_str), blessedstruct, 0);
 }
 
 static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
@@ -118,7 +136,7 @@ static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int asyn
 
     _DEBUG("end %s %p %d", __func__, ctx, async_id);
 
-    return (void *) _QueryContext_to_query_ctx(*entry);
+    return my_get_blessedstruct_ptr(*entry);
 }
 
 static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
@@ -128,6 +146,8 @@ static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
     SV* callback = sv_2mortal(query_ctx->callback);
 
     const char* id_str = _query_id_str(async_id);
+
+    // This will mortalize the query_ctx_svrv stored in the hash:
     hv_delete(ctx->queries, id_str, strlen(id_str), 0);
 
     _decrement_dub_ctx_refcount(aTHX_ ctx);
@@ -206,12 +226,13 @@ SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
 void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     _DEBUG("RESOLVE CALLBACK (mydata=%p)\n", mydata);
 
-    dub_query_ctx_t *query_ctx = mydata;
+    SV* query_ctx_svrv = (SV*) mydata;
+
+    dub_query_ctx_t *query_ctx = my_get_blessedstruct_ptr(query_ctx_svrv);
     _DEBUG("RESOLVE CALLBACK 2 (ID=%d)\n", query_ctx->id);
 
 #if NEED_THX
     pTHX = query_ctx->my_aTHX;
-    _DEBUG("RESOLVE CALLBACK 3");
 #endif
 
     SV* result_sv;
@@ -487,13 +508,12 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
 
         int async_id = 0;
 
-        dub_query_ctx_t* query_ctx;
-        Newx(query_ctx, 1, dub_query_ctx_t);
+        SV* query_ctx_svrv = my_new_blessedstruct(dub_query_ctx_t, "DNS::Unbound::QueryContext");
 
         int reserr = ub_resolve_async(
             ctx->ub_ctx,
             name, type, class,
-            (void *) query_ctx, _async_resolve_callback, &async_id
+            (void *) query_ctx_svrv, _async_resolve_callback, &async_id
         );
 
         AV *ret = newAV();
@@ -502,10 +522,10 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
         av_store( ret, 1, newSViv(async_id) );
 
         if (reserr) {
-            Safefree(query_ctx);
+            sv_2mortal(query_ctx_svrv);
         }
         else {
-            _store_query(aTHX_ ctx, query_ctx, async_id, callback);
+            _store_query(aTHX_ ctx, query_ctx_svrv, async_id, callback);
             _DEBUG("New query ID: %d", async_id);
         }
 
@@ -531,7 +551,7 @@ _resolve( DNS__Unbound__Context* ctx, SV *name, int type, int class = 1 )
     OUTPUT:
         RETVAL
 
-DNS__Unbound__Context*
+SV*
 create()
     CODE:
         struct ub_ctx* my_ctx = ub_ctx_create();
@@ -540,8 +560,9 @@ create()
             croak("Failed to create Unbound context!");
         }
 
-        DNS__Unbound__Context* dub_ctx;
-        Newx(dub_ctx, 1, DNS__Unbound__Context);
+        SV* dub_ctx_sv = my_new_blessedstruct(DNS__Unbound__Context, "DNS::Unbound::Context");
+
+        DNS__Unbound__Context* dub_ctx = my_get_blessedstruct_ptr(dub_ctx_sv);
 
         *dub_ctx = (DNS__Unbound__Context) {
             .pid = getpid(),
@@ -550,7 +571,7 @@ create()
             .refcount = 1,
         };
 
-        RETVAL = dub_ctx;
+        RETVAL = dub_ctx_sv;
     OUTPUT:
         RETVAL
 
@@ -570,10 +591,8 @@ DESTROY (SV* self_sv)
     CODE:
         _DEBUG("%s", __func__);
 
-        dub_query_ctx_t* query_ctx = _QueryContext_to_query_ctx(self_sv);
+        dub_query_ctx_t* query_ctx = my_get_blessedstruct_ptr(self_sv);
 
         if ((getpid() == query_ctx->pid) && PL_dirty) {
             warn("Freeing %" SVf " at global destruction; memory leak likely!", self_sv);
         }
-
-        Safefree(query_ctx);

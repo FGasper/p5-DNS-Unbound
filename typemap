@@ -4,8 +4,7 @@ DNS__Unbound__Context*  DNS_UNBOUND_T
 INPUT
 DNS_UNBOUND_T
 	if (SvROK($arg) && sv_derived_from($arg, \"${Package}\")) {
-	    IV tmp = SvIV((SV*)SvRV($arg));
-	    $var = INT2PTR($type,tmp);
+	    $var = my_get_blessedstruct_ptr($arg);
 	}
 	else {
 		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
@@ -15,7 +14,3 @@ DNS_UNBOUND_T
 			refstr, $arg
 		);
 	}
-
-OUTPUT
-DNS_UNBOUND_T
-	sv_setref_pv($arg, \"${Package}\", (void*)$var);
