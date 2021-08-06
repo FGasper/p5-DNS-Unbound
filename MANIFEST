@@ -26,6 +26,7 @@ lib/DNS/Unbound/X.pm
 lib/DNS/Unbound/X/BadDebugFD.pm
 lib/DNS/Unbound/X/Base.pm
 lib/DNS/Unbound/X/ResolveError.pm
+ppport.h
 t/anyevent.t
 t/async.t
 t/async_anyevent_xspromises.t
