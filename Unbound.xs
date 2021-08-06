@@ -72,6 +72,15 @@ SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
 
 // ----------------------------------------------------------------------
 
+#define _new_dub_context_struct(ubctx) (    \
+    (DNS__Unbound__Context) {               \
+        .pid = getpid(),                    \
+        .ub_ctx = ubctx,                    \
+        .queries = newHV(),                 \
+        .refcount = 1,                      \
+    }                                       \
+)
+
 #define _increment_dub_ctx_refcount(ctx) STMT_START { \
     ctx->refcount++;    \
     _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d)", __func__, ctx, ctx->refcount); \
@@ -562,12 +571,7 @@ create()
 
         DNS__Unbound__Context* dub_ctx = my_get_blessedstruct_ptr(dub_ctx_sv);
 
-        *dub_ctx = (DNS__Unbound__Context) {
-            .pid = getpid(),
-            .ub_ctx = my_ctx,
-            .queries = newHV(),
-            .refcount = 1,
-        };
+        *dub_ctx = _new_dub_context_struct(my_ctx);
 
         RETVAL = dub_ctx_sv;
     OUTPUT:
