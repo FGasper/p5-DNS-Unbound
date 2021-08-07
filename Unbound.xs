@@ -12,7 +12,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1
@@ -23,6 +23,7 @@
 #define _PERL_HAS_PL_PHASE (PERL_VERSION_GE(5, 14, 0))
 
 #if _PERL_HAS_PL_PHASE
+// TODO: Once the phase name macro is in ppport.h, use that instead.
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (phase=%s)\n", ##__VA_ARGS__, PL_phase_names[PL_phase]);
 #else
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);

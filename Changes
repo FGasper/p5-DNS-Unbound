@@ -16,7 +16,8 @@ Revision history for Perl module DNS::Unbound
       that had longer TTLs caused a conflict between Net::DNS’s parse
       and Unbound’s response.
 - Objects now warn() on DESTROY at global destruction. This helps to
-  identify memory leaks.
+  identify memory leaks. (It also entails a higher Promise::ES6 version
+  dependency.)
 - Internal style improvements.
 - All tests now fail on warnings.
 
