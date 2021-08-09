@@ -1,6 +1,6 @@
 Revision history for Perl module DNS::Unbound
 
-0.25
+0.25 Mon, 9 Aug 2021
 - BUG FIX: Make the C code not depend on (pure) Perl for memory handling.
   This intends to fix some longstanding (and hard-to-reproduce)
   memory-handling nits, but it’s also just much cleaner besides.
