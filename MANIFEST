@@ -42,5 +42,6 @@ t/ioasync.t
 t/load.t
 t/mojo.t
 t/option.t
+t/parallel.t
 t/resolvconf.t
 typemap
