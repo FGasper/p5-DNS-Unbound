@@ -95,9 +95,6 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
             warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
         }
 
-        // Workaround for https://github.com/NLnetLabs/unbound/issues/39:
-        ub_ctx_debugout(dub_ctx->ub_ctx, stderr);
-
         ub_ctx_delete(dub_ctx->ub_ctx);
         dub_ctx->ub_ctx = NULL;
 
@@ -349,10 +346,15 @@ _ub_ctx_debugout( DNS__Unbound__Context* ctx, int fd, SV *mode_sv )
             fstream = stdout;
         }
         else {
+            int dupfd = dup(fd);
+
+            if (-1 == dupfd) {
+                croak("Failed to dup(%d): %s", fd, strerror(errno));
+            }
 
             // Linux doesn’t care, but MacOS will segfault if you
             // setvbuf() on an append stream opened on a non-append fd.
-            fstream = fdopen( fd, mode );
+            fstream = fdopen( dupfd, mode );
 
             if (fstream == NULL) {
                 fprintf(stderr, "fdopen failed!!\n");

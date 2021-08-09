@@ -6,6 +6,12 @@ Revision history for Perl module DNS::Unbound
   memory-handling nits, but it’s also just much cleaner besides.
 - BUG FIX: We now honour $Config{'ccflags'} when building the module.
   (This broke at some point on 32-bit RaspiOS.)
+- BUG FIX: Previously we set ub_ctx_debugout() to STDERR immediately before
+  destroying the Unbound instance. This worked around a bug in libunbound,
+  but it also seems occasionally to cause “leftover” log messages then to
+  go to STDERR. We now apply a different workaround: dup() the file descriptor
+  when calling debugout(), which obviates the need to set it back to STDERR
+  (since this is now libunbound’s very own file descriptor).
 - BUG FIX: DNS::Unbound::Mojo no longer tight-loops.
 - BUG FIX: DNS::Unbound::Mojo now removes itself from Mojo’s reactor at
   DESTROY time; previously it neglected this cleanup step.
