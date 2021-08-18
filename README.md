@@ -39,7 +39,7 @@ You can also integrate with a custom event loop; see ["EVENT LOOPS"](#event-loop
 
 # DESCRIPTION
 
-This library is a Perl interface to the libary component of NLNetLabs’s
+This library is a Perl interface to the library component of NLNetLabs’s
 widely-used [Unbound](https://nlnetlabs.nl/projects/unbound/) recursive
 DNS resolver.
 

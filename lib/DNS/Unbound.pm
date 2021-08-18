@@ -48,7 +48,7 @@ You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 
 =head1 DESCRIPTION
 
-This library is a Perl interface to the libary component of NLNetLabs’s
+This library is a Perl interface to the library component of NLNetLabs’s
 widely-used L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive
 DNS resolver.
 
