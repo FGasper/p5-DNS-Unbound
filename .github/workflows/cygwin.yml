@@ -1,3 +1,5 @@
+name: cygwin
+
 on:
   push:
     branches:
@@ -23,6 +25,9 @@ jobs:
         with:
             platform: x64
             packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash unbound libnsl-devel
+      - name: Ensure libunbound availability
+        run: pkg-config --cflags libunbound
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
       - uses: actions/checkout@v2
       - run: perl -V
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
