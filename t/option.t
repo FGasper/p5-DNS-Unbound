@@ -8,26 +8,32 @@ use Test::FailWarnings;
 
 use DNS::Unbound ();
 
-my $dns = DNS::Unbound->new();
+{
+    my $dns = DNS::Unbound->new();
 
-is(
-    $dns->set_option( verbosity => 3 ),
-    $dns,
-    'set_option() returns the object',
-);
+    my $got = $dns->set_option( verbosity => 3 );
 
-is(
-    $dns->get_option('verbosity'),
-    3,
-    '… and get_option() returns what was just set',
-);
+    is(
+        "$got",
+        "$dns",
+        'set_option() returns the object',
+    );
 
-$dns->set_option( verbosity => 2 );
+    is(
+        $dns->get_option('verbosity'),
+        3,
+        '… and get_option() returns what was just set',
+    );
 
-is(
-    $dns->get_option('verbosity'),
-    2,
-    '… and it wasn’t just a default setting',
-);
+    $dns->set_option( verbosity => 2 );
+
+    is(
+        $dns->get_option('verbosity'),
+        2,
+        '… and it wasn’t just a default setting',
+    );
+
+    undef $dns;
+}
 
 done_testing();
