@@ -3,6 +3,15 @@ package DNS::Unbound;
 use strict;
 use warnings;
 
+use XSLoader ();
+
+our ($VERSION);
+
+BEGIN {
+    $VERSION = '0.27_01';
+    XSLoader::load( __PACKAGE__, $VERSION );
+}
+
 =encoding utf-8
 
 =head1 NAME
@@ -79,8 +88,6 @@ allow all queries to complete, or cancel queries you no longer care about.
 
 #----------------------------------------------------------------------
 
-use XSLoader ();
-
 use DNS::Unbound::Result ();
 use DNS::Unbound::X      ();
 
@@ -88,13 +95,6 @@ use DNS::Unbound::X      ();
 # This may change when non-default implementations
 # leave experimental status.
 use DNS::Unbound::AsyncQuery::PromiseES6 ();
-
-our ($VERSION);
-
-BEGIN {
-    $VERSION = '0.26';
-    XSLoader::load( __PACKAGE__, $VERSION );
-}
 
 # Retain this to avoid having to load Net::DNS::Parameters
 # except in unusual cases.

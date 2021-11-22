@@ -1,5 +1,9 @@
 Revision history for Perl module DNS::Unbound
 
+0.27
+- Close dup()ed file descriptors when setting debugout() away from them.
+- Add Cygwin CI
+
 0.26 Tue, 10 Aug 2021
 - Fix t/mojo.t to ignore spurious warning from some older Mojo versions.
 
