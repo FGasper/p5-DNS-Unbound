@@ -19,6 +19,6 @@ on develop => sub {
     requires 'IO::Async';
     recommends 'Mojolicious';
 
-    requires 'AnyEvent::XSPromises'
+    requires 'AnyEvent::XSPromises';
     requires 'Promise::XS';
 };
