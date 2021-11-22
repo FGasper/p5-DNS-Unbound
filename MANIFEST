@@ -47,4 +47,5 @@ t/mojo.t
 t/option.t
 t/parallel.t
 t/resolvconf.t
+t/resolve_error.t
 typemap

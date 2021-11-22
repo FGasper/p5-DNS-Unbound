@@ -27,7 +27,7 @@ jobs:
             packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash unbound libnsl-devel
       - name: Download & install unbound
         run: |
-            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz | tar -xzf -
+            curl -v https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz | tar -xzf -
             cd unbound-*
             ./configure --with-libunbound-only
             make install

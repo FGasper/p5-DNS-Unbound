@@ -70,4 +70,24 @@ for my $use_threads_yn ( 0, 1 ) {
     }
 }
 
+{
+    my $dns = DNS::Unbound->new();
+    my $done;
+
+    $dns->resolve_async( '....', 'NS' )->catch(
+        sub {
+            my $err = shift;
+
+            isa_ok( $err, 'DNS::Unbound::X::ResolveError', 'exception' );
+
+            # TODO: should be a named constant
+            is($err->get('number'), -3, 'number');
+
+            like( $err->get('string'), qr<.>, 'string' );
+        }
+    )->then( sub { die 'badbad' } )->finally( sub { $done = 1 } );
+
+    $dns->wait() while !$done;
+}
+
 done_testing();

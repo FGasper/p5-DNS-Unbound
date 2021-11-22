@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;
 use Test::FailWarnings;
+use Test::Exception;
 
 use DNS::Unbound ();
 
@@ -31,6 +32,12 @@ use DNS::Unbound ();
         $dns->get_option('verbosity'),
         2,
         '… and it wasn’t just a default setting',
+    );
+
+    throws_ok(
+        sub { $dns->set_option( hahaha => 3 ) },
+        qr<hahaha>,
+        'handling of unrecognized argument',
     );
 
     undef $dns;
