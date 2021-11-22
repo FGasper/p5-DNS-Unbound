@@ -1,6 +1,6 @@
 requires 'Class::XSAccessor' => '0.10';
 requires 'Net::DNS';
-requires 'Promise::XS' => 0.11;
+requires 'Promise::ES6' => 0.11;
 requires 'X::Tiny';
 requires 'XSLoader' => 0.24;
 
@@ -13,3 +13,9 @@ test_requires 'Net::DNS::Nameserver';
 recommends 'ExtUtils::PkgConfig';
 
 configure_requires 'ExtUtils::MakeMaker::CPANfile';
+
+on develop => sub {
+    requires 'AnyEvent';
+    requires 'IO::Async';
+    recommends 'Mojolicious';
+};
