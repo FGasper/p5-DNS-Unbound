@@ -1,6 +1,6 @@
 # NAME
 
-DNS::Unbound - libunbound in Perl
+DNS::Unbound - [libunbound](https://www.nlnetlabs.nl/documentation/unbound/libunbound/) in Perl
 
 # SYNOPSIS
 

@@ -16,7 +16,7 @@ BEGIN {
 
 =head1 NAME
 
-DNS::Unbound - libunbound in Perl
+DNS::Unbound - L<libunbound|https://www.nlnetlabs.nl/documentation/unbound/libunbound/> in Perl
 
 =head1 SYNOPSIS
 
