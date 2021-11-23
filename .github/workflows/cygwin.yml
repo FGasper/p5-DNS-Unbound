@@ -24,15 +24,15 @@ jobs:
         uses: egor-tensin/setup-cygwin@v3
         with:
             platform: x64
-            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash unbound libnsl-devel openssl-devel libexpat-devel
-      - name: Download & install unbound
-        run: |
-            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz | tar -xvzf -
-            cd unbound-*
-            ./configure
-            gmake install
-            cd ..
-        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel openssl-devel libexpat-devel
+#      - name: Download & install unbound
+#        run: |
+#            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz | tar -xvzf -
+#            cd unbound-*
+#            ./configure
+#            gmake install
+#            cd ..
+#        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
       - name: Ensure libunbound availability
         run: pkg-config --cflags libunbound
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'

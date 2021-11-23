@@ -39,6 +39,10 @@ You can also integrate with a custom event loop; see ["EVENT LOOPS"](#event-loop
 
 # DESCRIPTION
 
+<div>
+    <a href='https://coveralls.io/github/FGasper/p5-DNS-Unbound?branch=master'><img src='https://coveralls.io/repos/github/FGasper/p5-DNS-Unbound/badge.svg?branch=master' alt='Coverage Status' /></a>
+</div>
+
 This library is a Perl interface to the library component of NLNetLabs’s
 widely-used [Unbound](https://nlnetlabs.nl/projects/unbound/) recursive
 DNS resolver.
