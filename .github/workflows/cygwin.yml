@@ -29,10 +29,11 @@ jobs:
         run: |
             wget https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz
             tar -xzf unbound-*.tar.gz
-            cd unbound-*
-            ./configure --with-libunbound-only
-            make install
+            cd unbound-latest.tar.gz
+            ./configure
+            gmake install
             cd ..
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
       - name: Ensure libunbound availability
         run: pkg-config --cflags libunbound
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
