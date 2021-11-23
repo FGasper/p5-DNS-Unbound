@@ -159,7 +159,7 @@ use constant {
     UB_NOID => -10,
 };
 
-# Copied from libunbound
+# Copied from libunbound:
 use constant _ctx_err => {
     +UB_SOCKET  => 'socket error',
     +UB_NOMEM  => 'alloc failure',
@@ -174,6 +174,13 @@ use constant _ctx_err => {
 };
 
 #----------------------------------------------------------------------
+
+=head1 CONSTANTS
+
+The following from F<libunbound/context.h> are defined here:
+C<UB_NOERROR>, C<UB_SOCKET>, C<UB_NOMEM>, C<UB_SYNTAX>, C<UB_SERVFAIL>,
+C<UB_FORKFAIL>, C<UB_AFTERFINAL>, C<UB_INITFAIL>, C<UB_PIPE>,
+C<UB_READFILE>, C<UB_NOID>
 
 =head1 METHODS
 
