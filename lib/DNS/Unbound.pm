@@ -167,16 +167,16 @@ use constant {
 
 # Copied from libunbound:
 use constant _ctx_err => {
-    +UB_SOCKET  => 'socket error',
-    +UB_NOMEM  => 'alloc failure',
-    +UB_SYNTAX  => 'syntax error',
-    +UB_SERVFAIL  => 'DNS service failed',
-    +UB_FORKFAIL  => 'fork() failed',
-    +UB_AFTERFINAL  => 'cfg change after finalize()',
-    +UB_INITFAIL  => 'initialization failed (bad settings)',
-    +UB_PIPE  => 'error in pipe communication with async bg worker',
-    +UB_READFILE  => 'error reading from file',
-    +UB_NOID => 'async_id does not exist or result already been delivered',
+    UB_SOCKET()  => 'socket error',
+    UB_NOMEM()  => 'alloc failure',
+    UB_SYNTAX()  => 'syntax error',
+    UB_SERVFAIL()  => 'DNS service failed',
+    UB_FORKFAIL()  => 'fork() failed',
+    UB_AFTERFINAL()  => 'cfg change after finalize()',
+    UB_INITFAIL()  => 'initialization failed (bad settings)',
+    UB_PIPE()  => 'error in pipe communication with async bg worker',
+    UB_READFILE()  => 'error reading from file',
+    UB_NOID() => 'async_id does not exist or result already been delivered',
 };
 
 #----------------------------------------------------------------------
