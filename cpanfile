@@ -8,6 +8,7 @@ test_requires 'Test::DescribeMe';
 test_requires 'Test::More';
 test_requires 'Test::FailWarnings';
 test_requires 'Test::Exception';
+test_requires 'Test::Deep';
 test_requires 'Net::DNS::Nameserver';
 
 recommends 'ExtUtils::PkgConfig';

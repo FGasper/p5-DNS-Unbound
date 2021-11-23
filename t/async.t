@@ -5,6 +5,7 @@ use warnings;
 
 use Test::More;
 use Test::FailWarnings;
+use Test::Deep;
 
 use_ok('DNS::Unbound');
 
@@ -29,6 +30,15 @@ for my $use_threads_yn ( 0, 1 ) {
                 my ($result) = @_;
 
                 isa_ok( $result, 'DNS::Unbound::Result', 'promise resolution' );
+
+                my $rrs_ar = $result->to_net_dns_rrs();
+                cmp_deeply(
+                    $rrs_ar,
+                    array_each(
+                        Isa('Net::DNS::RR'),
+                    ),
+                    'to_net_dns_rrs() - DEPRECATED',
+                );
 
                 diag explain [ passed => $result ];
             },
