@@ -143,21 +143,35 @@ use constant _COMMON_RR => {
     URI        => 256,
 };
 
-# Copied from libunbound
-use constant _ctx_err => {
-    -1  => 'socket error',
-    -2  => 'alloc failure',
-    -3  => 'syntax error',
-    -4  => 'DNS service failed',
-    -5  => 'fork() failed',
-    -6  => 'cfg change after finalize()',
-    -7  => 'initialization failed (bad settings)',
-    -8  => 'error in pipe communication with async bg worker',
-    -9  => 'error reading from file',
-    -10 => 'async_id does not exist or result already been delivered',
+use constant {
+    _DEFAULT_PROMISE_ENGINE => 'Promise::ES6',
+
+    UB_NOERROR => 0,
+    UB_SOCKET => -1,
+    UB_NOMEM => -2,
+    UB_SYNTAX => -3,
+    UB_SERVFAIL => -4,
+    UB_FORKFAIL => -5,
+    UB_AFTERFINAL => -6,
+    UB_INITFAIL => -7,
+    UB_PIPE => -8,
+    UB_READFILE => -9,
+    UB_NOID => -10,
 };
 
-use constant _DEFAULT_PROMISE_ENGINE => 'Promise::ES6';
+# Copied from libunbound
+use constant _ctx_err => {
+    +UB_SOCKET  => 'socket error',
+    +UB_NOMEM  => 'alloc failure',
+    +UB_SYNTAX  => 'syntax error',
+    +UB_SERVFAIL  => 'DNS service failed',
+    +UB_FORKFAIL  => 'fork() failed',
+    +UB_AFTERFINAL  => 'cfg change after finalize()',
+    +UB_INITFAIL  => 'initialization failed (bad settings)',
+    +UB_PIPE  => 'error in pipe communication with async bg worker',
+    +UB_READFILE  => 'error reading from file',
+    +UB_NOID => 'async_id does not exist or result already been delivered',
+};
 
 #----------------------------------------------------------------------
 

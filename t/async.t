@@ -80,8 +80,7 @@ for my $use_threads_yn ( 0, 1 ) {
 
             isa_ok( $err, 'DNS::Unbound::X::ResolveError', 'exception' );
 
-            # TODO: should be a named constant
-            is($err->get('number'), -3, 'number');
+            is($err->get('number'), DNS::Unbound::UB_SYNTAX, 'number');
 
             like( $err->get('string'), qr<.>, 'string' );
         }

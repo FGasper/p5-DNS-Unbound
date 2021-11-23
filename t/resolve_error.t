@@ -17,11 +17,8 @@ $err = $@;
 
 isa_ok( $err, 'DNS::Unbound::X::ResolveError', 'exception' );
 
-# TODO: should be a named constant
-is($err->get('number'), -3, 'number()');
+is($err->get('number'), DNS::Unbound::UB_SYNTAX, 'number()');
 
 like( $err->get('string'), qr<.>, 'string()' );
-
-diag explain $err;
 
 done_testing;
