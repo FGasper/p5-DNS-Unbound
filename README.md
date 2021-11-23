@@ -1,6 +1,6 @@
 # NAME
 
-DNS::Unbound - [libunbound](https://www.nlnetlabs.nl/documentation/unbound/libunbound/) in Perl
+DNS::Unbound - Query DNS recursively via [libunbound](https://www.nlnetlabs.nl/documentation/unbound/libunbound/)
 
 # SYNOPSIS
 
@@ -43,9 +43,17 @@ You can also integrate with a custom event loop; see ["EVENT LOOPS"](#event-loop
     <a href='https://coveralls.io/github/FGasper/p5-DNS-Unbound?branch=master'><img src='https://coveralls.io/repos/github/FGasper/p5-DNS-Unbound/badge.svg?branch=master' alt='Coverage Status' /></a>
 </div>
 
-This library is a Perl interface to the library component of NLNetLabs’s
-widely-used [Unbound](https://nlnetlabs.nl/projects/unbound/) recursive
-DNS resolver.
+Typical DNS lookups involve a request to a local server that caches
+information from DNS. The caching makes it fast, but it also means
+updates to DNS aren’t always available via that local server right away.
+Most applications don’t need to care and so can enjoy the speed of
+cached results.
+
+Applications that need up-to-date DNS query results, though, need
+_fully-recursive_ DNS queries. NLnet Labs’s
+[libunbound](https://www.nlnetlabs.nl/documentation/unbound/libunbound/)
+is a popular solution for such queries; the present Perl module is an
+interface to that library.
 
 # CHARACTER ENCODING
 
@@ -238,6 +246,11 @@ and expected.
 
 Decodes a list of character-strings into component strings,
 returned as an array reference. Useful for `TXT` query results.
+
+# SEE ALSO
+
+[Net::DNS::Resolver::Recurse](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3ARecurse) provides comparable logic to this module
+in pure Perl. Like Unbound, it is maintained by ["NLnet Labs"](#nlnet-labs).
 
 # LICENSE & COPYRIGHT
 

@@ -8,7 +8,7 @@ use XSLoader ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.27_01';
+    $VERSION = '0.27';
     XSLoader::load( __PACKAGE__, $VERSION );
 }
 
@@ -16,7 +16,7 @@ BEGIN {
 
 =head1 NAME
 
-DNS::Unbound - L<libunbound|https://www.nlnetlabs.nl/documentation/unbound/libunbound/> in Perl
+DNS::Unbound - Query DNS recursively via L<libunbound|https://www.nlnetlabs.nl/documentation/unbound/libunbound/>
 
 =head1 SYNOPSIS
 
@@ -63,9 +63,17 @@ You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 
 =end html
 
-This library is a Perl interface to the library component of NLNetLabs’s
-widely-used L<Unbound|https://nlnetlabs.nl/projects/unbound/> recursive
-DNS resolver.
+Typical DNS lookups involve a request to a local server that caches
+information from DNS. The caching makes it fast, but it also means
+updates to DNS aren’t always available via that local server right away.
+Most applications don’t need to care and so can enjoy the speed of
+cached results.
+
+Applications that need up-to-date DNS query results, though, need
+I<fully-recursive> DNS queries. NLnet Labs’s
+L<libunbound|https://www.nlnetlabs.nl/documentation/unbound/libunbound/>
+is a popular solution for such queries; the present Perl module is an
+interface to that library.
 
 =head1 CHARACTER ENCODING
 
@@ -772,6 +780,11 @@ sub _get_error_string_from_number {
 }
 
 1;
+
+=head1 SEE ALSO
+
+L<Net::DNS::Resolver::Recurse> provides comparable logic to this module
+in pure Perl. Like Unbound, it is maintained by L<NLnet Labs>.
 
 =head1 LICENSE & COPYRIGHT
 
