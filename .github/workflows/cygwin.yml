@@ -24,7 +24,7 @@ jobs:
         uses: egor-tensin/setup-cygwin@v3
         with:
             platform: x64
-            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash unbound libnsl-devel
+            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash unbound libnsl-devel wget
       - name: Download & install unbound
         run: |
             wget https://www.nlnetlabs.nl/downloads/unbound/unbound-latest.tar.gz
