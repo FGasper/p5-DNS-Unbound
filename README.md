@@ -66,6 +66,13 @@ Objects in this namespace will, if left alive at global destruction,
 throw a warning about memory leaks. To silence these warnings, either
 allow all queries to complete, or cancel queries you no longer care about.
 
+# CONSTANTS
+
+The following from `libunbound/context.h` are defined here:
+`UB_NOERROR`, `UB_SOCKET`, `UB_NOMEM`, `UB_SYNTAX`, `UB_SERVFAIL`,
+`UB_FORKFAIL`, `UB_AFTERFINAL`, `UB_INITFAIL`, `UB_PIPE`,
+`UB_READFILE`, `UB_NOID`
+
 # METHODS
 
 ## _CLASS_->new()
