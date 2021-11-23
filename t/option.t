@@ -35,9 +35,15 @@ use DNS::Unbound ();
     );
 
     throws_ok(
+        sub { $dns->get_option( 'hahaha' ) },
+        qr<hahaha>,
+        'set_option(): handling of unrecognized argument',
+    );
+
+    throws_ok(
         sub { $dns->set_option( hahaha => 3 ) },
         qr<hahaha>,
-        'handling of unrecognized argument',
+        'set_option(): handling of unrecognized argument',
     );
 
     undef $dns;
