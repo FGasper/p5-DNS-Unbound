@@ -157,34 +157,33 @@ use constant _COMMON_RR => {
     URI        => 256,
 };
 
+my %ub_errs;
+BEGIN {
+    %ub_errs = (
+
+        # unbound.h doesn’t define these, strangely enough …
+        UB_NOERROR => 0,
+        UB_SOCKET => -1,
+        UB_NOMEM => -2,
+        UB_SYNTAX => -3,
+        UB_SERVFAIL => -4,
+        UB_FORKFAIL => -5,
+        UB_AFTERFINAL => -6,
+        UB_INITFAIL => -7,
+        UB_PIPE => -8,
+        UB_READFILE => -9,
+        UB_NOID => -10,
+    );
+}
+
 use constant {
     _DEFAULT_PROMISE_ENGINE => 'Promise::ES6',
-
-    UB_NOERROR => 0,
-    UB_SOCKET => -1,
-    UB_NOMEM => -2,
-    UB_SYNTAX => -3,
-    UB_SERVFAIL => -4,
-    UB_FORKFAIL => -5,
-    UB_AFTERFINAL => -6,
-    UB_INITFAIL => -7,
-    UB_PIPE => -8,
-    UB_READFILE => -9,
-    UB_NOID => -10,
+    %ub_errs,
 };
 
 # Copied from libunbound:
 use constant _ctx_err => {
-    UB_SOCKET()  => 'socket error',
-    UB_NOMEM()  => 'alloc failure',
-    UB_SYNTAX()  => 'syntax error',
-    UB_SERVFAIL()  => 'DNS service failed',
-    UB_FORKFAIL()  => 'fork() failed',
-    UB_AFTERFINAL()  => 'cfg change after finalize()',
-    UB_INITFAIL()  => 'initialization failed (bad settings)',
-    UB_PIPE()  => 'error in pipe communication with async bg worker',
-    UB_READFILE()  => 'error reading from file',
-    UB_NOID() => 'async_id does not exist or result already been delivered',
+    map { $_ => _ub_strerror($_) } values %ub_errs
 };
 
 #----------------------------------------------------------------------
