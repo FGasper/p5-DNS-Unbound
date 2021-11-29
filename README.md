@@ -250,7 +250,7 @@ returned as an array reference. Useful for `TXT` query results.
 # SEE ALSO
 
 [Net::DNS::Resolver::Recurse](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3ARecurse) provides comparable logic to this module
-in pure Perl. Like Unbound, it is maintained by ["NLnet Labs"](#nlnet-labs).
+in pure Perl. Like Unbound, it is maintained by [NLnet Labs](https://nlnetlabs.nl/).
 
 # LICENSE & COPYRIGHT
 

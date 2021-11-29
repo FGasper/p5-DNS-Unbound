@@ -181,7 +181,6 @@ use constant {
     %ub_errs,
 };
 
-# Copied from libunbound:
 use constant _ctx_err => {
     map { $_ => _ub_strerror($_) } values %ub_errs
 };
@@ -783,7 +782,7 @@ sub _get_error_string_from_number {
 =head1 SEE ALSO
 
 L<Net::DNS::Resolver::Recurse> provides comparable logic to this module
-in pure Perl. Like Unbound, it is maintained by L<NLnet Labs>.
+in pure Perl. Like Unbound, it is maintained by L<NLnet Labs|https://nlnetlabs.nl/>.
 
 =head1 LICENSE & COPYRIGHT
 
