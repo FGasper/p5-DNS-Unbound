@@ -157,32 +157,16 @@ use constant _COMMON_RR => {
     URI        => 256,
 };
 
-my %ub_errs;
-BEGIN {
-    %ub_errs = (
-
-        # unbound.h doesn’t define these, strangely enough …
-        UB_NOERROR => 0,
-        UB_SOCKET => -1,
-        UB_NOMEM => -2,
-        UB_SYNTAX => -3,
-        UB_SERVFAIL => -4,
-        UB_FORKFAIL => -5,
-        UB_AFTERFINAL => -6,
-        UB_INITFAIL => -7,
-        UB_PIPE => -8,
-        UB_READFILE => -9,
-        UB_NOID => -10,
-    );
-}
-
 use constant {
     _DEFAULT_PROMISE_ENGINE => 'Promise::ES6',
-    %ub_errs,
 };
 
 use constant _ctx_err => {
-    map { $_ => _ub_strerror($_) } values %ub_errs
+    (
+        map { $_ => _ub_strerror($_) }
+        map { __PACKAGE__->can($_)->() }
+        split m<\s+>a, _ERROR_NAMES_STR()
+    )
 };
 
 #----------------------------------------------------------------------

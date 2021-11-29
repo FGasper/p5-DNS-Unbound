@@ -29,6 +29,10 @@
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);
 #endif
 
+// As of November 2021 these are defined in unbound.h;
+// they’re copied here for backward compatibility:
+#include "errcodes_define.inc"
+
 typedef struct {
     pid_t pid;
     struct ub_ctx* ub_ctx;
@@ -286,6 +290,8 @@ void _close_saved_debugfd (DNS__Unbound__Context* ctx) {
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
 
 PROTOTYPES: DISABLE
+
+INCLUDE: errcodes_boot.inc
 
 const char*
 _get_fd_mode_for_fdopen(int fd)
