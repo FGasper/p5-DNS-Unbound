@@ -19,9 +19,9 @@ libunbound DNS resolution failure.
 =cut
 
 sub _new {
-    my ($class, @args_kv) = @_;
+    my ($class, %args_kv) = @_;
 
-    return $class->SUPER::_new( 'DNS query resolution failure', @args_kv );
+    return $class->SUPER::_new( "DNS query resolution failure ($args_kv{'string'}", %args_kv );
 }
 
 1;
