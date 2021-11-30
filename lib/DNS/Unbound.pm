@@ -98,6 +98,23 @@ Objects in this namespace will, if left alive at global destruction,
 throw a warning about memory leaks. To silence these warnings, either
 allow all queries to complete, or cancel queries you no longer care about.
 
+=head1 ERRORS
+
+This library throws 3 kinds of errors:
+
+=over
+
+=item * Plain strings. Generally thrown in “simple” failure cases,
+e.g., invalid inputs.
+
+=item * L<DNS::Unbound::X::Unbound> instances. Thrown whenever
+Unbound gives an error.
+
+=item * L<DNS::Unbound::X::ResolveError> instances. A subclass
+of the last kind, for resolution failures.
+
+=back
+
 =cut
 
 #----------------------------------------------------------------------
@@ -747,16 +764,6 @@ sub DESTROY {
             warn "$self DESTROYed at global destruction; memory leak likely!";
         }
     }
-}
-
-sub _get_error_string_from_number {
-    my ($err) = @_;
-
-    if ($err) {
-        return _ctx_err()->{$err} || "Unknown error code: $err";
-    }
-
-    return undef;
 }
 
 1;

@@ -78,6 +78,17 @@ Objects in this namespace will, if left alive at global destruction,
 throw a warning about memory leaks. To silence these warnings, either
 allow all queries to complete, or cancel queries you no longer care about.
 
+# ERRORS
+
+This library throws 3 kinds of errors:
+
+- Plain strings. Generally thrown in “simple” failure cases,
+e.g., invalid inputs.
+- [DNS::Unbound::X::Unbound](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AX%3A%3AUnbound) instances. Thrown whenever
+Unbound gives an error.
+- [DNS::Unbound::X::ResolveError](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AX%3A%3AResolveError) instances. A subclass
+of the last kind, for resolution failures.
+
 # CONSTANTS
 
 The following from `libunbound/context.h` are defined here:

@@ -19,23 +19,41 @@ lives_ok(
     'no arg given',
 );
 
-dies_ok(
-    sub { $dns->resolvconf('////////qqqq' . rand) },
-    'nonexistent path given',
-);
+eval { $dns->resolvconf('////////qqqq' . rand) };
 
 my $err = $@;
 
-cmp_deeply(
-    $err,
-    all(
-        Isa('DNS::Unbound::X::Unbound'),
-        methods(
-            [ get => 'number' ] => DNS::Unbound::UB_READFILE,
-            [ get => 'string' ] => re(qr<file>i),
+SKIP: {
+    if (!$err) {
+        my $is_ok = !DNS::Unbound->can('unbound_version');
+
+        my $full_version;
+
+        $is_ok ||= do {
+            $full_version = DNS::Unbound::unbound_version();
+            my $version = $full_version;
+            $version =~ s<\..*?\z><>;
+            $version < 1.13;
+        };
+
+        if ($is_ok) {
+            $full_version ||= '?';
+
+            skip "resolvconf() didn’t throw on a nonexistent path, but your libunbound ($full_version) may just be too old to report that.", 1;
+        }
+    }
+
+    cmp_deeply(
+        $err,
+        all(
+            Isa('DNS::Unbound::X::Unbound'),
+            methods(
+                [ get => 'number' ] => DNS::Unbound::UB_READFILE,
+                [ get => 'string' ] => re(qr<file>i),
+            ),
         ),
-    ),
-    'error thrown',
-) or diag explain $err;
+        'error thrown',
+    ) or diag explain $err;
+}
 
 done_testing();
