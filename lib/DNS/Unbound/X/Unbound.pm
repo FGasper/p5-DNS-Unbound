@@ -28,9 +28,11 @@ to one of L<DNS::Unbound>’s C<UB_*> constants.
 =cut
 
 sub _new {
-    my ($class, $text, @args_kv) = @_;
+    my ($class, $msg, %args_kv) = @_;
 
-    return $class->SUPER::_new( $text, @args_kv );
+    my $str = "$msg: $args_kv{'string'}";
+
+    return $class->SUPER::_new( $str, %args_kv );
 }
 
 1;
