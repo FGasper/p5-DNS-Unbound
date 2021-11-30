@@ -165,7 +165,7 @@ use constant _ctx_err => {
     (
         map { $_ => _ub_strerror($_) }
         map { __PACKAGE__->can($_)->() }
-        split m<\s+>a, _ERROR_NAMES_STR()
+        split m<\s+>, _ERROR_NAMES_STR()
     )
 };
 

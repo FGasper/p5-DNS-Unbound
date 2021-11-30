@@ -316,7 +316,7 @@ WriteMakefile(
 sub _generate_includes {
     open my $fh, '<', 'errcodes.txt';
 
-    my @err_value = map { [ split m<\s+>a ] } grep { !tr/#// } <$fh>;
+    my @err_value = map { [ split m<\s+> ] } grep { !tr/#// } <$fh>;
 
     {
         open my $define_fh, '>', 'errcodes_define.inc';

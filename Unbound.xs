@@ -29,8 +29,6 @@
 #define _DEBUG(str, ...) if (DEBUG) fprintf(stderr, str " (destruct? %d)\n", ##__VA_ARGS__, PL_dirty);
 #endif
 
-// As of November 2021 these are defined in unbound.h;
-// they’re copied here for backward compatibility:
 #include "errcodes_define.inc"
 
 typedef struct {
