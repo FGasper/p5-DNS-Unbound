@@ -246,6 +246,12 @@ sub _create_resolve_error {
     return DNS::Unbound::X->create( 'ResolveError', number => $number, string => _ub_strerror($number) );
 }
 
+sub _create_unbound_error {
+    my ($text, $number) = @_;
+
+    return DNS::Unbound::X->create( 'Unbound', $text, number => $number, string => _ub_strerror($number) );
+}
+
 #----------------------------------------------------------------------
 
 =head2 $query = I<OBJ>->resolve_async( $NAME, $TYPE [, $CLASS ] );
@@ -411,8 +417,7 @@ sub set_option {
     my $err = $self->{'_ub'}->_ub_ctx_set_option( "$name:", $value );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to set “$name” option ($value): $str";
+        die _create_unbound_error("Failed to set “$name” option ($value)", $err);
     }
 
     return $self;
@@ -430,8 +435,7 @@ sub get_option {
     my $got = $self->{'_ub'}->_ub_ctx_get_option( $name );
 
     if ( !ref($got) ) {
-        my $str = _get_error_string_from_number($got);
-        die "Failed to get “$name” option: $str";
+        die _create_unbound_error("Failed to get “$name” option", $got);
     }
 
     return $$got;
@@ -510,8 +514,7 @@ sub hosts {
     my $err = $self->{'_ub'}->_ub_ctx_hosts( $path );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to set hosts file: $str";
+        die _create_unbound_error("Failed to set hosts file", $err);
     }
 
     return $self;
@@ -523,8 +526,7 @@ sub resolvconf {
     my $err = $self->{'_ub'}->_ub_ctx_resolvconf( $path );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to set stub nameservers: $str";
+        die _create_unbound_error("Failed to set stub nameservers", $err);
     }
 
     return $self;
@@ -619,8 +621,7 @@ sub add_ta {
     my $err = $self->{'_ub'}->_ub_ctx_add_ta( $ta );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to add trust anchor: $str";
+        die _create_unbound_error("Failed to add trust anchor", $err);
     }
 
     return $self;
@@ -638,8 +639,7 @@ sub add_ta_autr {
     my $err = $self->{'_ub'}->_ub_ctx_add_ta_autr( $path );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to add managed trust anchor file: $str";
+        die _create_unbound_error("Failed to add managed trust anchor file", $err);
     }
 
     return $self;
@@ -657,8 +657,7 @@ sub add_ta_file {
     my $err = $self->{'_ub'}->_ub_ctx_add_ta_file( $path );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to add zone-style trust anchor file: $str";
+        die _create_unbound_error("Failed to add zone-style trust anchor file", $err);
     }
 
     return $self;
@@ -676,8 +675,7 @@ sub trustedkeys {
     my $err = $self->{'_ub'}->_ub_ctx_trustedkeys( $path );
 
     if ($err) {
-        my $str = _get_error_string_from_number($err);
-        die "Failed to add BIND-style trust anchor file: $str";
+        die _create_unbound_error("Failed to add BIND-style trust anchor file", $err);
     }
 
     return $self;

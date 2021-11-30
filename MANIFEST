@@ -29,6 +29,7 @@ lib/DNS/Unbound/X.pm
 lib/DNS/Unbound/X/BadDebugFD.pm
 lib/DNS/Unbound/X/Base.pm
 lib/DNS/Unbound/X/ResolveError.pm
+lib/DNS/Unbound/X/Unbound.pm
 ppport.h
 t/anyevent.t
 t/async.t
@@ -48,5 +49,6 @@ t/mojo.t
 t/option.t
 t/parallel.t
 t/resolvconf.t
+t/resolvconf_unpriv.t
 t/resolve_error.t
 typemap
