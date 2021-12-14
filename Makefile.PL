@@ -335,6 +335,6 @@ sub _generate_includes {
         open my $boot_fh, '>', 'errcodes_boot.inc';
         print {$boot_fh} "BOOT:\n";
         print {$boot_fh} qq<    newCONSTSUB( $pkg_gv, "_ERROR_NAMES_STR", newSVpvs("@names") );\n>;
-        print {$boot_fh} qq/    newCONSTSUB( $pkg_gv, "$_->[0]", newSViv($_->[0]) );\n/ for @$err_value_ar;
+        print {$boot_fh} qq/    newCONSTSUB( $pkg_gv, "$_", newSViv($_) );\n/ for @names;
     }
 }

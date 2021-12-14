@@ -10,7 +10,7 @@ Makefile.PL
 README.md
 Unbound.xs
 cpanfile
-errcodes.txt
+errcodes.jsonc
 examples/anyevent.pl
 examples/io_async.pl
 lib/DNS/Unbound.pm
