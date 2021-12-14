@@ -18,6 +18,12 @@ BEGIN {
 
 DNS::Unbound - Query DNS recursively via L<libunbound|https://www.nlnetlabs.nl/documentation/unbound/libunbound/>
 
+=begin html
+
+<a href='https://coveralls.io/github/FGasper/p5-DNS-Unbound?branch=master'><img src='https://coveralls.io/repos/github/FGasper/p5-DNS-Unbound/badge.svg?branch=master' alt='Coverage Status' /></a>
+
+=end html
+
 =head1 SYNOPSIS
 
     my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
@@ -56,12 +62,6 @@ You can also integrate with a custom event loop; see L</"EVENT LOOPS"> below.
 =cut
 
 =head1 DESCRIPTION
-
-=begin html
-
-<a href='https://coveralls.io/github/FGasper/p5-DNS-Unbound?branch=master'><img src='https://coveralls.io/repos/github/FGasper/p5-DNS-Unbound/badge.svg?branch=master' alt='Coverage Status' /></a>
-
-=end html
 
 Typical DNS lookups involve a request to a local server that caches
 information from DNS. The caching makes it fast, but it also means
