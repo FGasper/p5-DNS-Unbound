@@ -465,7 +465,6 @@ int
 _ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
         char *fname_str = SvPVbyte_nolen(fname);
-    fprintf(stderr, "trustedkeys(%s)\n", fname_str);
         RETVAL = ub_ctx_trustedkeys( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
