@@ -2,6 +2,7 @@ Revision history for Perl module DNS::Unbound
 
 0.28
 - Make all Unbound-created errors X::Tiny::Base instances.
+- Import error codes from unbound.h.
 - Add more tests.
 
 0.27 Tue, 23 Nov 2021

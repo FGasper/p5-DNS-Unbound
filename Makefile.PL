@@ -10,6 +10,7 @@ my ($cflags, $ldflags);
 use Config;
 use File::Temp;
 use File::Spec;
+use JSON::PP;
 
 my $ccpath = $ENV{'CC'} || $Config::Config{'cc'};
 print "Your C compiler appears to be: $ccpath\n";
@@ -314,25 +315,26 @@ WriteMakefile(
 #----------------------------------------------------------------------
 
 sub _generate_includes {
-    open my $fh, '<', 'errcodes.txt';
+    open my $fh, '<', 'errcodes.jsonc' or die "open: $!";
+    my $jsonc = do { local $/; <$fh> };
 
-    my @err_value = map { [ split m<\s+> ] } grep { !tr/#// } <$fh>;
+    my $err_value_ar = JSON::PP->new()->relaxed()->decode($jsonc);
 
     {
         open my $define_fh, '>', 'errcodes_define.inc';
         print {$define_fh} "#if !HAS_UB_CONSTANTS\n";
-        print {$define_fh} "#   define @$_\n" for @err_value;
+        print {$define_fh} "#   define @$_\n" for @$err_value_ar;
         print {$define_fh} "#endif\n";
     }
 
     {
-        my @names = map { $_->[0] } @err_value;
+        my @names = map { $_->[0] } @$err_value_ar;
 
         my $pkg_gv = qq<gv_stashpv("\$Package", FALSE)>;
 
         open my $boot_fh, '>', 'errcodes_boot.inc';
         print {$boot_fh} "BOOT:\n";
         print {$boot_fh} qq<    newCONSTSUB( $pkg_gv, "_ERROR_NAMES_STR", newSVpvs("@names") );\n>;
-        print {$boot_fh} qq/    newCONSTSUB( $pkg_gv, "$_->[0]", newSViv($_->[0]) );\n/ for @err_value;
+        print {$boot_fh} qq/    newCONSTSUB( $pkg_gv, "$_->[0]", newSViv($_->[0]) );\n/ for @$err_value_ar;
     }
 }
