@@ -1,3 +1,7 @@
+#pragma clang diagnostic ignored "-Wcompound-token-split-by-macro"
+
+#define PERL_NO_GET_CONTEXT
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -236,16 +240,15 @@ SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
 }
 
 void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
-    _DEBUG("RESOLVE CALLBACK (mydata=%p)\n", mydata);
-
     SV* query_ctx_svrv = (SV*) mydata;
 
     dub_query_ctx_t *query_ctx = my_get_blessedstruct_ptr(query_ctx_svrv);
-    _DEBUG("RESOLVE CALLBACK 2 (ID=%d)\n", query_ctx->id);
 
 #if NEED_THX
     pTHX = query_ctx->my_aTHX;
 #endif
+
+    _DEBUG("RESOLVE CALLBACK (ID=%d)\n", query_ctx->id);
 
     SV* result_sv;
     _DEBUG("err: %d\n", err);
@@ -462,6 +465,7 @@ int
 _ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
         char *fname_str = SvPVbyte_nolen(fname);
+    fprintf(stderr, "trustedkeys(%s)\n", fname_str);
         RETVAL = ub_ctx_trustedkeys( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
