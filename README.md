@@ -87,7 +87,8 @@ e.g., invalid inputs.
 - [DNS::Unbound::X::Unbound](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AX%3A%3AUnbound) instances. Thrown whenever
 Unbound gives an error.
 - [DNS::Unbound::X::ResolveError](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AX%3A%3AResolveError) instances. A subclass
-of the last kind, for resolution failures.
+of the last kind, for (Unbound-reported) resolution failures.
+(This is **NOT** for DNS-reported failures.)
 
 # CONSTANTS
 

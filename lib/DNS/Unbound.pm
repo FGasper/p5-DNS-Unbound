@@ -8,7 +8,7 @@ use XSLoader ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.28_01';
+    $VERSION = '0.28';
     XSLoader::load( __PACKAGE__, $VERSION );
 }
 
@@ -111,7 +111,8 @@ e.g., invalid inputs.
 Unbound gives an error.
 
 =item * L<DNS::Unbound::X::ResolveError> instances. A subclass
-of the last kind, for resolution failures.
+of the last kind, for (Unbound-reported) resolution failures.
+(This is B<NOT> for DNS-reported failures.)
 
 =back
 
