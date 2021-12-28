@@ -1,5 +1,11 @@
 Revision history for Perl module DNS::Unbound
 
+0.29
+- Fix tests on 5.8. It really shouldn’t matter since X::Tiny requires 5.10,
+  but some CPAN installers happily install X::Tiny anyway when installing
+  DNS::Unbound on 5.8. It’s an easy enough fix, though, and it usefully
+  tests the object properties of the thrown errors. So hey.
+
 0.28 Wed, 15 Dec 2021
 - Make all Unbound-created errors X::Tiny::Base instances.
 - Import error codes from unbound.h.
