@@ -38,7 +38,7 @@ jobs:
       - name: Compile & install old OpenSSL
         run: |
             cd ..
-            curl https://www.openssl.org/source/old/1.0.1/openssl-1.0.0s.tar.gz | tar -xzf -
+            curl https://www.openssl.org/source/old/1.0.0/openssl-1.0.0s.tar.gz | tar -xzf -
             cd openssl-1.0.0s
             ./config
             make install
