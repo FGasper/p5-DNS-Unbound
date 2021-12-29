@@ -224,7 +224,7 @@ They return _OBJ_ and throw errors on failure.
 
 ## _OBJ_->add\_ta\_autr( $PATH )
 
-
+(Available only if libunbound supports it.)
 
 ## _OBJ_->add\_ta\_file( $PATH )
 

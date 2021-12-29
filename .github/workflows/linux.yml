@@ -16,7 +16,7 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
-  unbound-1.4.17:
+  unbound-1-4-17:
     runs-on: ubuntu-latest
 
     strategy:
