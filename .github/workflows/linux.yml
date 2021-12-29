@@ -35,20 +35,20 @@ jobs:
 #      - name: Install System Dependencies
 #        run: apt install -y libldns-dev
 
-      - name: Compile & install ldns
-        run: |
-            cd ..
-            curl https://www.nlnetlabs.nl/downloads/ldns/ldns-1.0.0.tar.gz | tar -xzf -
-            cd ldns-1.0.0
-            ./configure
-            make install
-
       - name: Compile & install old OpenSSL
         run: |
             cd ..
             curl https://www.openssl.org/source/old/1.0.1/openssl-1.0.1u.tar.gz | tar -xzf -
             cd openssl-1.0.1u
             ./config
+            make install
+
+      - name: Compile & install ldns
+        run: |
+            cd ..
+            curl https://www.nlnetlabs.nl/downloads/ldns/ldns-1.0.0.tar.gz | tar -xzf -
+            cd ldns-1.0.0
+            ./configure
             make install
 
       - name: Compile & install old Unbound
