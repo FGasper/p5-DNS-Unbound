@@ -40,6 +40,9 @@ jobs:
             ./config
             make install
 
+      - name: Install System Dependencies
+        run: apt install -y libldns-dev
+
       - name: Compile & install old Unbound
         run: |
             cd ..
