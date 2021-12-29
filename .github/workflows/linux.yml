@@ -29,15 +29,24 @@ jobs:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
 
     steps:
-      - uses: actions/checkout@v2
       - name: perl -V
         run: perl -V
-      - name: Compile & install old Unbound
+
+      - name: Compile & install old OpenSSL & Unbound
         run: |
+            curl https://www.openssl.org/source/old/0.9.x/openssl-0.9.8zh.tar.gz | tar -xvzf -
+            cd openssl-0.9.8zh
+            ./configure
+            make install
+            cd ..
             curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xvzf -
             cd unbound-1.4.17
             ./configure
             make install
+            cd ..
+
+      - uses: actions/checkout@v2
+
       - name: Install Perl Dependencies
         run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
       - name: perl Makefile.PL
