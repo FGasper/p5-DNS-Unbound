@@ -48,7 +48,7 @@ jobs:
             cd ..
             curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xzf -
             cd unbound-1.4.17
-            ./configure
+            ./configure --with-libunbound-only
             make install
 
       - uses: actions/checkout@v2
