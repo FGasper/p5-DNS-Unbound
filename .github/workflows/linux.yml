@@ -32,6 +32,9 @@ jobs:
       - name: perl -V
         run: perl -V
 
+      - name: Install System Dependencies
+        run: apt install -y libldns-dev
+
       - name: Compile & install old OpenSSL
         run: |
             cd ..
@@ -39,9 +42,6 @@ jobs:
             cd openssl-1.0.1u
             ./config
             make install
-
-      - name: Install System Dependencies
-        run: apt install -y libldns-dev
 
       - name: Compile & install old Unbound
         run: |
