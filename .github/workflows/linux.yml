@@ -34,18 +34,19 @@ jobs:
 
       - name: Compile & install old OpenSSL
         run: |
-            curl https://www.openssl.org/source/old/1.1.0/openssl-1.1.0l.tar.gz | tar -xzf -
-            cd openssl-1.1.0l
+            cd ..
+            curl https://www.openssl.org/source/old/1.0.1/openssl-1.0.1u.tar.gz | tar -xzf -
+            cd openssl-1.0.1u
             ./config
             make install
 
       - name: Compile & install old Unbound
         run: |
+            cd ..
             curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xzf -
             cd unbound-1.4.17
             ./configure
             make install
-            cd ..
 
       - uses: actions/checkout@v2
 
