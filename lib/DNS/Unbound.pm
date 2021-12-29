@@ -647,20 +647,24 @@ sub add_ta {
 
 =head2 I<OBJ>->add_ta_autr( $PATH )
 
-Z<>
+(Available only if libunbound supports it.)
 
 =cut
 
-sub add_ta_autr {
-    my ($self, $path) = @_;
+BEGIN {
+    if (__PACKAGE__->can('_ub_ctx_add_ta_autr')) {
+        *add_ta_autr = sub {
+            my ($self, $path) = @_;
 
-    my $err = $self->{'_ub'}->_ub_ctx_add_ta_autr( $path );
+            my $err = $self->{'_ub'}->_ub_ctx_add_ta_autr( $path );
 
-    if ($err) {
-        die _create_unbound_error("Failed to add managed trust anchor file", $err);
+            if ($err) {
+                die _create_unbound_error("Failed to add managed trust anchor file", $err);
+            }
+
+            return $self;
+        }
     }
-
-    return $self;
 }
 
 =head2 I<OBJ>->add_ta_file( $PATH )

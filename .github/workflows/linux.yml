@@ -8,17 +8,46 @@ on:
       - '*'
   pull_request:
 
+env:
+    PERL_USE_UNSAFE_INC: 0
+    AUTHOR_TESTING: 0
+    AUTOMATED_TESTING: 1
+    RELEASE_TESTING: 0
+    PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
+
 jobs:
+  unbound-1.4.17:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version:
+          - '5.34'
+
+    container:
+      image: perldocker/perl-tester:${{ matrix.perl-version }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: perl -V
+        run: perl -V
+      - name: Compile & install old Unbound
+        run: |
+            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xvzf -
+            cd unbound-1.4.17
+            ./configure
+            make install
+      - name: Install Perl Dependencies
+        run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
+      - name: perl Makefile.PL
+        run: perl Makefile.PL
+      - name: Run Tests
+        run: make test
+
   perl:
 
     runs-on: ubuntu-latest
-
-    env:
-       PERL_USE_UNSAFE_INC: 0
-       AUTHOR_TESTING: 0
-       AUTOMATED_TESTING: 1
-       RELEASE_TESTING: 0
-       PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
     strategy:
       fail-fast: false
