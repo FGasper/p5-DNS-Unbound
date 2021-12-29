@@ -16,58 +16,6 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
-  unbound-1-4-17:
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        perl-version:
-          - '5.34'
-
-    container:
-      image: perldocker/perl-tester:${{ matrix.perl-version }}
-
-    steps:
-      - name: perl -V
-        run: perl -V
-
-#      - name: Install System Dependencies
-#        run: apt install -y libldns-dev
-
-      - name: Compile & install old OpenSSL
-        run: |
-            cd ..
-            curl https://www.openssl.org/source/old/1.0.0/openssl-1.0.0s.tar.gz | tar -xzf -
-            cd openssl-1.0.0s
-            ./config
-            make install
-
-      - name: Compile & install ldns
-        run: |
-            cd ..
-            curl https://www.nlnetlabs.nl/downloads/ldns/ldns-1.0.0.tar.gz | tar -xzf -
-            cd ldns-1.0.0
-            ./configure
-            make install
-
-      - name: Compile & install old Unbound
-        run: |
-            cd ..
-            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xzf -
-            cd unbound-1.4.17
-            ./configure --with-libunbound-only
-            make install
-
-      - uses: actions/checkout@v2
-
-      - name: Install Perl Dependencies
-        run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
-      - name: perl Makefile.PL
-        run: perl Makefile.PL
-      - name: Run Tests
-        run: make test
-
   perl:
 
     runs-on: ubuntu-latest

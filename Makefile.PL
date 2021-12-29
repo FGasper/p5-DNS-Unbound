@@ -39,7 +39,7 @@ else {
         $ldflags = `pkg-config --libs $pkgconfig_name`;
     }
 
-    chomp for $cflags, $ldflags;
+    $_ && chomp for $cflags, $ldflags;
 }
 
 # In case pkg-config didn’t give us anything.
