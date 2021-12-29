@@ -34,12 +34,12 @@ jobs:
 
       - name: Compile & install old OpenSSL & Unbound
         run: |
-            curl https://www.openssl.org/source/old/0.9.x/openssl-0.9.8zh.tar.gz | tar -xvzf -
+            curl https://www.openssl.org/source/old/0.9.x/openssl-0.9.8zh.tar.gz | tar -xzf -
             cd openssl-0.9.8zh
-            ./configure
+            ./Configure
             make install
             cd ..
-            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xvzf -
+            curl https://www.nlnetlabs.nl/downloads/unbound/unbound-1.4.17.tar.gz | tar -xzf -
             cd unbound-1.4.17
             ./configure
             make install
