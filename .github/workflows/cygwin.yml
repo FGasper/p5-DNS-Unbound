@@ -23,6 +23,7 @@ jobs:
       - name: Set up Cygwin
         uses: egor-tensin/setup-cygwin@v3
         with:
+            submodules: recursive
             platform: x64
             packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel
       - name: Ensure libunbound availability

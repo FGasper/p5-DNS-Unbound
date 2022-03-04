@@ -2,6 +2,7 @@
 .github/workflows/linux.yml
 .github/workflows/macos.yml
 .gitignore
+.gitmodules
 .travis.yml
 Changes
 LICENSE
@@ -10,6 +11,7 @@ Makefile.PL
 README.md
 Unbound.xs
 cpanfile
+easyxs
 errcodes.jsonc
 examples/anyevent.pl
 examples/io_async.pl

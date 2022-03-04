@@ -1,12 +1,4 @@
-#pragma clang diagnostic ignored "-Wcompound-token-split-by-macro"
-
-#define PERL_NO_GET_CONTEXT
-
-#include "EXTERN.h"
-#include "perl.h"
-#include "XSUB.h"
-
-#include "ppport.h"
+#include "easyxs/easyxs.h"
 
 #include <unbound.h>    /* unbound API */
 #include <unistd.h>
@@ -67,7 +59,7 @@ typedef struct {
 
 #define my_get_blessedstruct_ptr(svrv) ( (void *) SvPVX( SvRV(svrv) ) )
 
-SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
+static SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) {
 
     SV* referent = newSV(size);
     SvPOK_on(referent);
@@ -175,7 +167,7 @@ static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
 
 // ----------------------------------------------------------------------
 
-SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
+static SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
 
     AV *data = newAV();
     unsigned datasize = 0;
@@ -239,7 +231,7 @@ SV* _ub_result_to_svhv_and_free (pTHX_ struct ub_result* result) {
     return newRV_noinc( (SV *)rh );
 }
 
-void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
+static void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     SV* query_ctx_svrv = (SV*) mydata;
 
     dub_query_ctx_t *query_ctx = my_get_blessedstruct_ptr(query_ctx_svrv);
@@ -282,7 +274,7 @@ void _async_resolve_callback(void* mydata, int err, struct ub_result* result) {
     return;
 }
 
-void _close_saved_debugfd (DNS__Unbound__Context* ctx) {
+static void _close_saved_debugfd (DNS__Unbound__Context* ctx) {
         if (-1 != ctx->debugfd) close(ctx->debugfd);
 }
 

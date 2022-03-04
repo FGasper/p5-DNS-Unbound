@@ -265,7 +265,7 @@ for my $check (@checks) {
     #   compile flags, compile source, linker flags, then linker source.
     my $cmd = "$ccpath $cflags $cpath $ldflags -o $progpath";
 
-    # print "Compiling test program: `$cmd`\n";
+    print "Compiling test program: `$cmd`\n";
     system($cmd);
 
     my $success = -s $progpath ? 1 : 0;

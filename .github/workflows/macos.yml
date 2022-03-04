@@ -21,7 +21,9 @@ jobs:
        PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
       - name: Set up Perl
         run: brew install perl unbound
       - name: perl -V
