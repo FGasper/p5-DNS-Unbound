@@ -1,7 +1,3 @@
-.github/workflows/all.yml
-.github/workflows/cygwin.yml
-.gitignore
-.gitmodules
 .travis.yml
 Changes
 LICENSE
