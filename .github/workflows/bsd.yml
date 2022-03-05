@@ -1,3 +1,18 @@
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+env:
+    PERL_USE_UNSAFE_INC: 0
+    AUTHOR_TESTING: 0
+    AUTOMATED_TESTING: 1
+    RELEASE_TESTING: 0
+    PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
+
 jobs:
   test:
     runs-on: macos-10.15
