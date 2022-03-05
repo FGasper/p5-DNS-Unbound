@@ -1,3 +1,5 @@
+name: BSDs
+
 on:
   push:
     branches:
@@ -21,16 +23,16 @@ jobs:
         os:
           - name: freebsd
             version: '12.2'
-            pkginstall: pkg install unbound
+            pkginstall: pkg install -y unbound
           - name: freebsd
             version: '13.0'
-            pkginstall: pkg install unbound
+            pkginstall: pkg install -y unbound
           - name: openbsd
             version: '6.9'
             pkginstall: pkg_add libunbound
           - name: netbsd
             version: '9.2'
-            pkginstall: pkg install unbound
+            pkginstall: pkg_add libunbound
 
     steps:
       - uses: actions/checkout@v3
@@ -44,7 +46,7 @@ jobs:
           version: ${{ matrix.os.version }}
           shell: bash
           run: |
-            ${{ matrix.os.pkginstall }}
+            sudo ${{ matrix.os.pkginstall }}
             git clone --recurse-submodules $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
             cd $( echo $GITHUB_REPOSITORY | cut -d/ -f2 );
             curl -L https://cpanmin.us | perl - --notest --installdeps .
