@@ -30,7 +30,7 @@ jobs:
             pkginstall: pkg install -y unbound perl5
           - name: openbsd
             version: '6.9'
-            pkginstall: pkg_add libunbound pkgconfig
+            pkginstall: pkg_add libunbound pkg-config
 #          - name: netbsd
 #            version: '9.2'
 #            pkginstall: pkg_add libunbound
@@ -51,6 +51,7 @@ jobs:
           version: ${{ matrix.os.version }}
           shell: bash
           run: |
+            which pkg-config
             sudo ${{ matrix.os.pkginstall }}
             curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
             perl Makefile.PL
