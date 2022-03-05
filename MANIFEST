@@ -1,7 +1,5 @@
-.github/workflows/bsd.yml
+.github/workflows/all.yml
 .github/workflows/cygwin.yml
-.github/workflows/linux.yml
-.github/workflows/macos.yml
 .gitignore
 .gitmodules
 .travis.yml
