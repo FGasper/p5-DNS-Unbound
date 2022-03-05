@@ -16,6 +16,13 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
+  perl-fedora:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run tests on Fedora 35
+        run: docker run --rm --interactive 35/fedora bash -c "dnf install unbound-devel perl; git clone --recurse-submodules $GITHUB_SERVER_URL/$GITHUB_REPOSITORY; cd $( echo $GITHUB_REPOSITORY | cut -d/ -f2 ); curl -L https://cpanmin.us | perl - --notest --installdeps .; perl Makefile.PL; make; prove -wlvmb t"
+
   perl:
 
     runs-on: ubuntu-latest
