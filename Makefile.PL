@@ -263,7 +263,7 @@ for my $check (@checks) {
 
     # Some compilers care about order here:
     #   compile flags, compile source, linker flags, then linker source.
-    my $cmd = "$ccpath $cflags $cpath -o $progpath $ldflags";
+    my $cmd = "$ccpath $Config{'ccflags'} $cflags $cpath -o $progpath $Config{ccdlflags} $ldflags";
 
     print "Compiling test program: `$cmd`\n";
     system($cmd);
