@@ -19,9 +19,13 @@ jobs:
 
     strategy:
       fail-fast: true
+      matrix:
+        fedora-tag:
+          - 35
+          - latest
 
     container:
-      image: fedora
+      image: fedora:${{ matrix.fedora-tag }}
 
     steps:
       - run: dnf install -y unbound-devel perl git curl
