@@ -14,30 +14,6 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
-  linux-fedora:
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: true
-      matrix:
-        fedora-tag:
-          - 35
-          - latest
-
-    container:
-      image: fedora:${{ matrix.fedora-tag }}
-
-    steps:
-      - run: dnf install -y unbound-devel perl git curl
-      - uses: actions/checkout@v3
-        with:
-            submodules: recursive
-      - run: perl -V
-      - run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure .
-      - run: perl Makefile.PL
-      - run: make
-      - run: prove -wlmvb t
-
   linux:
     runs-on: ubuntu-latest
 
@@ -78,6 +54,31 @@ jobs:
         run: make
       - name: Run Tests
         run: make test
+
+  linux-fedora:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        fedora-tag:
+          - 35
+          - latest
+
+    container:
+      image: fedora:${{ matrix.fedora-tag }}
+
+    steps:
+      - run: dnf install -y unbound-devel perl git curl
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
+      - run: perl -V
+      - run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure .
+      - run: perl Makefile.PL
+      - run: make
+      - run: prove -wlmvb t
+
 
   macos:
     runs-on: macOS-latest
