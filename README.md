@@ -103,7 +103,7 @@ The following from `libunbound/context.h` are defined here:
 
 Instantiates this class.
 
-## $result\_hr = _OBJ_->resolve( $NAME, $TYPE \[, $CLASS \] )
+## $result\_obj = _OBJ_->resolve( $NAME, $TYPE \[, $CLASS \] )
 
 Runs a synchronous query for a given $NAME and $TYPE. $TYPE may be
 expressed numerically or, for convenience, as a string. $CLASS is
@@ -116,7 +116,7 @@ timing out a synchronous query.
 If timeouts are relevant for you, you probably need
 to use `resolve_async()` instead.
 
-## $query = _OBJ_->resolve\_async( $NAME, $TYPE \[, $CLASS \] );
+## $query\_obj = _OBJ_->resolve\_async( $NAME, $TYPE \[, $CLASS \] );
 
 Like `resolve()` but starts an asynchronous query rather than a
 synchronous one.
@@ -126,8 +126,9 @@ thereof, to be precise).
 
 If you’re using one of the special event interface subclasses
 (e.g., [DNS::Unbound::IOAsync](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AIOAsync)) then the returned promise will resolve
-on its own. Otherwise, [see below](#custom-event-loop-integration)
-for the methods you’ll need to use in tandem with this one.
+as part of the event loop’s normal operation. Otherwise,
+[see below](#custom-event-loop-integration) for the methods you’ll need
+to use in tandem with this one to get your query result.
 
 ## _OBJ_->enable\_threads()
 
@@ -242,8 +243,9 @@ functions (but not as class methods). In addition to these,
 functions for decoding the values of `A` and `AAAA` records.
 
 **NOTE:** Consider parsing [DNS::Unbound::Result](https://metacpan.org/pod/DNS%3A%3AUnbound%3A%3AResult)’s `answer_packet()`
-with [Net::DNS::Packet](https://metacpan.org/pod/Net%3A%3ADNS%3A%3APacket) as a more robust, albeit heavier, way to
-parse query result data.
+as a more robust, albeit heavier, way to parse query result data.
+[Net::DNS::Packet](https://metacpan.org/pod/Net%3A%3ADNS%3A%3APacket) and [AnyEvent::DNS](https://metacpan.org/pod/AnyEvent%3A%3ADNS)’s `dns_unpack()` are two good
+ways to parse DNS packets.
 
 ## $decoded = decode\_name($encoded)
 

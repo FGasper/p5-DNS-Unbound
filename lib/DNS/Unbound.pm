@@ -212,7 +212,7 @@ sub new {
       shift();
 }
 
-=head2 $result_hr = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
+=head2 $result_obj = I<OBJ>->resolve( $NAME, $TYPE [, $CLASS ] )
 
 Runs a synchronous query for a given $NAME and $TYPE. $TYPE may be
 expressed numerically or, for convenience, as a string. $CLASS is
@@ -272,7 +272,7 @@ sub _create_unbound_error {
 
 #----------------------------------------------------------------------
 
-=head2 $query = I<OBJ>->resolve_async( $NAME, $TYPE [, $CLASS ] );
+=head2 $query_obj = I<OBJ>->resolve_async( $NAME, $TYPE [, $CLASS ] );
 
 Like C<resolve()> but starts an asynchronous query rather than a
 synchronous one.
@@ -282,8 +282,9 @@ thereof, to be precise).
 
 If you’re using one of the special event interface subclasses
 (e.g., L<DNS::Unbound::IOAsync>) then the returned promise will resolve
-on its own. Otherwise, L<see below|/"CUSTOM EVENT LOOP INTEGRATION">
-for the methods you’ll need to use in tandem with this one.
+as part of the event loop’s normal operation. Otherwise,
+L<see below|/"CUSTOM EVENT LOOP INTEGRATION"> for the methods you’ll need
+to use in tandem with this one to get your query result.
 
 =cut
 
@@ -725,8 +726,9 @@ L<Socket> provides the C<inet_ntoa()> and C<inet_ntop()>
 functions for decoding the values of C<A> and C<AAAA> records.
 
 B<NOTE:> Consider parsing L<DNS::Unbound::Result>’s C<answer_packet()>
-with L<Net::DNS::Packet> as a more robust, albeit heavier, way to
-parse query result data.
+as a more robust, albeit heavier, way to parse query result data.
+L<Net::DNS::Packet> and L<AnyEvent::DNS>’s C<dns_unpack()> are two good
+ways to parse DNS packets.
 
 =head2 $decoded = decode_name($encoded)
 

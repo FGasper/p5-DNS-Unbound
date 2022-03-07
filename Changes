@@ -1,6 +1,7 @@
 Revision history for Perl module DNS::Unbound
 
 0.29
+- Reject NULs in input strings where relevant.
 - Fix tests on 5.8. It really shouldn’t matter since X::Tiny requires 5.10,
   but some CPAN installers happily install X::Tiny anyway when installing
   DNS::Unbound on 5.8. It’s an easy enough fix, though, and it usefully
