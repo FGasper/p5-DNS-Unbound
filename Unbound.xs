@@ -329,7 +329,7 @@ PROTOTYPES: DISABLE
 int
 _ub_ctx_set_option( DNS__Unbound__Context* ctx, const char* opt, SV* val_sv)
     CODE:
-        char *val = SvPVbyte_nolen(val_sv);
+        char *val = exs_SvPVbyte_nolen(val_sv);
         RETVAL = ub_ctx_set_option(ctx->ub_ctx, opt, val);
     OUTPUT:
         RETVAL
@@ -342,7 +342,7 @@ _ub_ctx_debuglevel( DNS__Unbound__Context* ctx, int d )
 void
 _ub_ctx_debugout( DNS__Unbound__Context* ctx, int fd, SV *mode_sv )
     CODE:
-        char *mode = SvPVbyte_nolen(mode_sv);
+        char *mode = exs_SvPVbyte_nolen(mode_sv);
         FILE *fstream;
 
         int fd_to_save = -1;
@@ -388,7 +388,7 @@ _ub_ctx_get_option( DNS__Unbound__Context* ctx, SV* opt)
     CODE:
         char *str;
 
-        char *opt_str = SvPVbyte_nolen(opt);
+        char *opt_str = exs_SvPVbyte_nolen(opt);
 
         int fate = ub_ctx_get_option(ctx->ub_ctx, opt_str, &str);
 
@@ -411,7 +411,7 @@ _ub_ctx_get_option( DNS__Unbound__Context* ctx, SV* opt)
 int
 _ub_ctx_add_ta( DNS__Unbound__Context* ctx, SV *ta )
     CODE:
-        char *ta_str = SvPVbyte_nolen(ta);
+        char *ta_str = exs_SvPVbyte_nolen(ta);
         RETVAL = ub_ctx_add_ta( ctx->ub_ctx, ta_str );
     OUTPUT:
         RETVAL
@@ -420,7 +420,7 @@ _ub_ctx_add_ta( DNS__Unbound__Context* ctx, SV *ta )
 int
 _ub_ctx_add_ta_autr( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
-        char *fname_str = SvPVbyte_nolen(fname);
+        char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_add_ta_autr( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
@@ -430,7 +430,7 @@ _ub_ctx_add_ta_autr( DNS__Unbound__Context* ctx, SV *fname )
 int
 _ub_ctx_resolvconf( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
-        char *fname = SvOK(fname_sv) ? SvPVbyte_nolen(fname_sv) : NULL;
+        char *fname = SvOK(fname_sv) ? exs_SvPVbyte_nolen(fname_sv) : NULL;
 
         RETVAL = ub_ctx_resolvconf( ctx->ub_ctx, fname );
     OUTPUT:
@@ -439,7 +439,7 @@ _ub_ctx_resolvconf( DNS__Unbound__Context* ctx, SV *fname_sv )
 int
 _ub_ctx_hosts( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
-        char *fname = SvOK(fname_sv) ? SvPVbyte_nolen(fname_sv) : NULL;
+        char *fname = SvOK(fname_sv) ? exs_SvPVbyte_nolen(fname_sv) : NULL;
 
         RETVAL = ub_ctx_hosts( ctx->ub_ctx, fname );
     OUTPUT:
@@ -448,7 +448,7 @@ _ub_ctx_hosts( DNS__Unbound__Context* ctx, SV *fname_sv )
 int
 _ub_ctx_add_ta_file( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
-        char *fname_str = SvPVbyte_nolen(fname);
+        char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_add_ta_file( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
@@ -456,7 +456,7 @@ _ub_ctx_add_ta_file( DNS__Unbound__Context* ctx, SV *fname )
 int
 _ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
-        char *fname_str = SvPVbyte_nolen(fname);
+        char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_trustedkeys( ctx->ub_ctx, fname_str );
     OUTPUT:
         RETVAL
@@ -530,7 +530,7 @@ _ub_fd( DNS__Unbound__Context* ctx )
 SV*
 _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV *callback )
     CODE:
-        char *name = SvPVbyte_nolen(name_sv);
+        char *name = exs_SvPVbyte_nolen(name_sv);
 
         int async_id = 0;
 
@@ -565,7 +565,7 @@ _resolve( DNS__Unbound__Context* ctx, SV *name, int type, int class = 1 )
         struct ub_result* result;
         int retval;
 
-        retval = ub_resolve(ctx->ub_ctx, SvPVbyte_nolen(name), type, class, &result);
+        retval = ub_resolve(ctx->ub_ctx, exs_SvPVbyte_nolen(name), type, class, &result);
 
         if (retval != 0) {
             RETVAL = newSViv(retval);
