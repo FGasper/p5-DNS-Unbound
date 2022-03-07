@@ -263,8 +263,8 @@ returned as an array reference. Useful for `TXT` query results.
 
 # SEE ALSO
 
-[Net::DNS::Resolver::Unbound](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3AUnbound) provides much the same interface but as a
-subclass of [Net::DNS::Resolver](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver).
+[Net::DNS::Resolver::Unbound](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3AUnbound) provides generally-comparable functionality
+but as a subclass of [Net::DNS::Resolver](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver).
 
 [Net::DNS::Resolver::Recurse](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3ARecurse) provides comparable logic to this module
 in pure Perl. Like Unbound, it is maintained by

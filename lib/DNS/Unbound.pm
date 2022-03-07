@@ -777,8 +777,8 @@ sub DESTROY {
 
 =head1 SEE ALSO
 
-L<Net::DNS::Resolver::Unbound> provides much the same interface but as a
-subclass of L<Net::DNS::Resolver>.
+L<Net::DNS::Resolver::Unbound> provides generally-comparable functionality
+but as a subclass of L<Net::DNS::Resolver>.
 
 L<Net::DNS::Resolver::Recurse> provides comparable logic to this module
 in pure Perl. Like Unbound, it is maintained by
