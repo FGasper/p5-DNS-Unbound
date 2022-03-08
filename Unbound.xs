@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define UNUSED(x) (void)(x)
 
@@ -30,7 +31,7 @@
 typedef struct {
     pid_t pid;
     struct ub_ctx* ub_ctx;
-    HV* queries;
+    HV* queries_hv;
     unsigned refcount;
     int debugfd;    /* -1 means no stored debug out */
 } DNS__Unbound__Context;
@@ -76,7 +77,7 @@ static SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) 
     (DNS__Unbound__Context) {               \
         .pid = getpid(),                    \
         .ub_ctx = ubctx,                    \
-        .queries = newHV(),                 \
+        .queries_hv = newHV(),              \
         .refcount = 1,                      \
         .debugfd = -1,                      \
     }                                       \
@@ -87,7 +88,7 @@ static SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) 
     _DEBUG("%s: DNS__Unbound__Context %p inc refcount (now %d)", __func__, ctx, ctx->refcount); \
 } STMT_END
 
-static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
+static bool _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     if (!--dub_ctx->refcount) {
         _DEBUG("Freeing DNS__Unbound__Context %p", dub_ctx);
 
@@ -101,16 +102,20 @@ static void _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
         ub_ctx_delete(dub_ctx->ub_ctx);
         dub_ctx->ub_ctx = NULL;
 
-        SvREFCNT_dec((SV*) dub_ctx->queries);
+        SvREFCNT_dec((SV*) dub_ctx->queries_hv);
+
+        return true;
     }
-    else {
-        _DEBUG("DNS__Unbound__Context %p dec refcount (now %d)", dub_ctx, dub_ctx->refcount);
-    }
+
+    _DEBUG("DNS__Unbound__Context %p dec refcount (now %d)", dub_ctx, dub_ctx->refcount);
+    return false;
 }
 
 // ----------------------------------------------------------------------
 
-#define _query_id_str(async_id) form("%d", async_id)
+#define _create_query_id_str(async_id, strname) \
+    char strname[256]; \
+    snprintf(strname, sizeof(strname), "%d", async_id);
 
 static void _store_query (pTHX_ DNS__Unbound__Context* ctx, SV* blessedstruct, int async_id, SV* callback) {
 
@@ -123,46 +128,55 @@ static void _store_query (pTHX_ DNS__Unbound__Context* ctx, SV* blessedstruct, i
         .pid = getpid(),
         .ctx = ctx,
         .id  = async_id,
-        .callback = newSVsv(callback),
+        .callback = SvREFCNT_inc(callback),
     };
 
     _increment_dub_ctx_refcount(ctx);
 
-    const char* id_str = _query_id_str(async_id);
+    _create_query_id_str(async_id, id_str);
 
-    hv_store(ctx->queries, id_str, strlen(id_str), blessedstruct, 0);
+    hv_store(ctx->queries_hv, id_str, strlen(id_str), blessedstruct, 0);
 }
 
 static dub_query_ctx_t* _fetch_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
     _DEBUG("%s %p %d", __func__, ctx, async_id);
-    const char* id_str = _query_id_str(async_id);
+    _create_query_id_str(async_id, id_str);
 
-    SV** entry = hv_fetch(ctx->queries, id_str, strlen(id_str), 0);
+    SV** entry = hv_fetch(ctx->queries_hv, id_str, strlen(id_str), 0);
 
     // Sanity-check:
-    if (!entry || !*entry) croak("no query with ID %s found?!?", id_str);
+    assert(entry && *entry);
 
     _DEBUG("end %s %p %d", __func__, ctx, async_id);
 
     return my_get_blessedstruct_ptr(*entry);
 }
 
-static SV* _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id) {
+static void _unstore_query (pTHX_ DNS__Unbound__Context* ctx, int async_id, SV* cb_arg) {
     _DEBUG("%s %p %d", __func__, ctx, async_id);
     dub_query_ctx_t* query_ctx = _fetch_query(aTHX_ ctx, async_id);
 
-    SV* callback = sv_2mortal(query_ctx->callback);
+    SV* callback = query_ctx->callback;
 
-    const char* id_str = _query_id_str(async_id);
+    _create_query_id_str(async_id, id_str);
 
     // This will mortalize the query_ctx_svrv stored in the hash:
-    hv_delete(ctx->queries, id_str, strlen(id_str), 0);
+    SV* query_ctx_svrv = hv_delete(ctx->queries_hv, id_str, strlen(id_str), 0);
+    PERL_UNUSED_VAR(query_ctx_svrv);
+    assert(query_ctx_svrv);
 
-    _decrement_dub_ctx_refcount(aTHX_ ctx);
+    if (_decrement_dub_ctx_refcount(aTHX_ ctx)) {
+        warn("Prematurely reaped DNS::Unbound::Context?!?!?");
+    }
+
+    if (cb_arg) {
+        SV *args[] = { cb_arg, NULL };
+        exs_call_sv_void(callback, args);
+    }
+
+    SvREFCNT_dec(callback);
 
     _DEBUG("end %s %p", __func__, ctx);
-
-    return callback;
 }
 
 // ----------------------------------------------------------------------
@@ -252,24 +266,7 @@ static void _async_resolve_callback(void* mydata, int err, struct ub_result* res
         result_sv = _ub_result_to_svhv_and_free(aTHX_ result);
     }
 
-    SV* callback = _unstore_query(aTHX_ query_ctx->ctx, query_ctx->id );
-
-    // --------------------------------------------------
-
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    mPUSHs(result_sv);
-    PUTBACK;
-
-    // Nothing should croak here:
-    call_sv(callback, G_VOID | G_DISCARD);
-
-    FREETMPS;
-    LEAVE;
+    _unstore_query(aTHX_ query_ctx->ctx, query_ctx->id, result_sv );
 
     return;
 }
@@ -499,7 +496,7 @@ _ub_process( DNS__Unbound__Context* ctx )
 unsigned
 _count_pending_queries ( DNS__Unbound__Context* ctx )
     CODE:
-        RETVAL = hv_iterinit(ctx->queries);
+        RETVAL = hv_iterinit(ctx->queries_hv);
 
     OUTPUT:
         RETVAL
@@ -511,7 +508,7 @@ _ub_cancel( DNS__Unbound__Context* ctx, int async_id )
         int result = ub_cancel(ctx->ub_ctx, async_id);
 
         if (!result) {
-            _unstore_query(aTHX_ ctx, async_id);
+            _unstore_query(aTHX_ ctx, async_id, NULL);
         }
 
         RETVAL = result;
@@ -542,18 +539,18 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
             (void *) query_ctx_svrv, _async_resolve_callback, &async_id
         );
 
-        AV *ret = newAV();
-        av_extend(ret, 1);  // 2 elems - 1
-        av_store( ret, 0, newSViv(reserr) );
-        av_store( ret, 1, newSViv(async_id) );
-
         if (reserr) {
-            sv_2mortal(query_ctx_svrv);
+            SvREFCNT_dec(query_ctx_svrv);
         }
         else {
             _store_query(aTHX_ ctx, query_ctx_svrv, async_id, callback);
             _DEBUG("New query ID: %d", async_id);
         }
+
+        AV *ret = newAV();
+        av_extend(ret, 1);  // 2 elems - 1
+        av_store( ret, 0, newSViv(reserr) );
+        av_store( ret, 1, newSViv(async_id) );
 
         RETVAL = newRV_noinc((SV *)ret);
     OUTPUT:
