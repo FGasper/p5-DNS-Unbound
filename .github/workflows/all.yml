@@ -35,6 +35,10 @@ jobs:
           - '5.12'
           - '5.10'
 
+        unbound-version:
+          - ~
+          - '1.15.0'
+
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
 
@@ -44,8 +48,15 @@ jobs:
             submodules: recursive
       - name: perl -V
         run: perl -V
-      - name: Install System Dependencies
+      - if: ${{ matrix.unbound-version }}
+        name: Install libunbound dependencies
+        run: apt install -y libexpat1-dev libssl-dev
+      - if: ${{ matrix.unbound-version }}
+        name: Build & install libunbound
+        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
+      - name: Install System libunbound
         run: apt install -y libunbound-dev
+        if: ${{ !matrix.unbound-version }}
       - name: Install Perl Dependencies
         run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
       - name: perl Makefile.PL
