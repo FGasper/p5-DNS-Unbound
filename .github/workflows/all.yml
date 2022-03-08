@@ -108,7 +108,8 @@ jobs:
     runs-on: windows-latest
 
     defaults:
-      shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+      run:
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
 
     steps:
       - name: Set up Cygwin
