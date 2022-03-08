@@ -115,6 +115,7 @@ jobs:
           PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - run: make
       - run: ldd blib/arch/auto/DNS/Unbound/Unbound.so
+      - run: readelf -d blib/arch/auto/DNS/Unbound/Unbound.so | grep 'R.*PATH'
       - run: prove -wlmvb t
 
 
