@@ -77,7 +77,7 @@ jobs:
         fedora-tag:
           - 35
           - 34
-          - 28
+          - 29
 #          - latest
         unbound-version:
           - ~
@@ -98,7 +98,7 @@ jobs:
         run: dnf install -y gcc expat-devel openssl-devel pkgconf-pkg-config
       - name: Bulid & install libunbound ${{ matrix.unbound-version }}
         if: ${{ matrix.unbound-version }}
-        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
+        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install-all
       - name: Confirm .pc file existence
         if: ${{ matrix.unbound-version }}
         run: find /usr/local -name '*.pc'
