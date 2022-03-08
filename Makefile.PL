@@ -5,7 +5,7 @@ use ExtUtils::MakeMaker::CPANfile;
 
 my $pkgconfig_name = 'libunbound';
 
-my ($cflags, $ldflags);
+my ($cflags, $ldflags, $libdir);
 
 use Config;
 use File::Temp;
@@ -22,6 +22,7 @@ if ( eval { require ExtUtils::PkgConfig } ) {
     # didn’t include a pkg-config file.
     $cflags = ExtUtils::PkgConfig->cflags($pkgconfig_name);
     $ldflags = ExtUtils::PkgConfig->libs($pkgconfig_name);
+    $libdir = ExtUtils::PkgConfig->libs_only_L($pkgconfig_name);
 }
 else {
     print "Hmm. You don’t seem to have ExtUtils::PkgConfig.\n";
@@ -37,9 +38,14 @@ else {
         print "Cool. It looks like pkg-config works.\n";
 
         $ldflags = `pkg-config --libs $pkgconfig_name`;
+        $libdir = `pkg-config --libs-only-L $pkgconfig_name`;
     }
 
-    $_ && chomp for $cflags, $ldflags;
+    $_ && chomp for $cflags, $ldflags, $libdir;
+}
+
+if ($libdir) {
+    $ldflags .= " -Wl,-rpath,$libdir";
 }
 
 # In case pkg-config didn’t give us anything.
