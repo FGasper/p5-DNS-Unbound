@@ -10,6 +10,7 @@ Revision history for Perl module DNS::Unbound
 - Fix install with old libunbound (e.g., 1.4.17).
 - Require a new-ish X::Tiny (since tests assume it).
 - Fix trivial warning in Makefile.PL.
+- Make feature-detection logic mimic build configuration better.
 
 0.28 Wed, 15 Dec 2021
 - Make all Unbound-created errors X::Tiny::Base instances.
