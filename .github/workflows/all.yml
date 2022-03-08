@@ -116,9 +116,10 @@ jobs:
       - run: make
       - run: ldd blib/arch/auto/DNS/Unbound/Unbound.so
       - run: ls -la /usr/local/lib
-      - run: "readelf -d blib/arch/auto/DNS/Unbound/Unbound.so | grep 'R.*PATH' ||:"
+      - run: readelf -a blib/arch/auto/DNS/Unbound/Unbound.so
       - run: prove -wlmvb t
-
+        env:
+          LD_LIBRARY_PATH: /usr/local/lib
 
 #  macos:
 #    runs-on: macOS-latest
