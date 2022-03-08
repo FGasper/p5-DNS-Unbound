@@ -44,10 +44,6 @@ else {
     $_ && chomp for $cflags, $ldflags, $libdir;
 }
 
-if ($libdir) {
-    $ldflags .= " -Wl,-rpath,$libdir";
-}
-
 # In case pkg-config didn’t give us anything.
 if (!$ldflags) {
     warn "I didn’t find libunbound via pkg-config. :(\n";
@@ -284,6 +280,11 @@ for my $check (@checks) {
 
 _generate_includes();
 
+my @extra_makefile_args;
+if ($libdir) {
+    push @extra_makefile_args, LDDLFLAGS => "-Wl,-rpath,$libdir $Config{lddlflags}",
+}
+
 WriteMakefile(
     NAME           => 'DNS::Unbound',
     VERSION_FROM   => 'lib/DNS/Unbound.pm',
@@ -302,6 +303,9 @@ WriteMakefile(
         "-DHAS_TTL=$HAS_TTL",
         "-DHAS_UB_CONSTANTS=$HAS_UB_CONSTANTS",
     ),
+
+    @extra_makefile_args,
+
     LIBS           => [ $ldflags ],
     LICENSE        => 'perl',
 
