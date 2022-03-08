@@ -99,7 +99,7 @@ jobs:
       - name: Build & install libunbound ${{ matrix.unbound-version }}
         if: ${{ matrix.unbound-version }}
         run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
-      - name: Accommodate old unbounds that didn’t install pkg-config
+      - name: Accommodate unbounds that don’t install pkg-config
         if: ${{ matrix.unbound-version }}
         run: '[ ! -e /usr/local/lib/pkgconfig/libunbound.pc ] && mkdir -p /usr/local/lib/pkgconfig && cp unbound-${{ matrix.unbound-version }}/contrib/libunbound.pc /usr/local/lib/pkgconfig'
       - name: Confirm .pc file existence
@@ -115,6 +115,7 @@ jobs:
           PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - run: make
       - run: ldd blib/arch/auto/DNS/Unbound/Unbound.so
+      - run: dnf install -y binutils
       - run: readelf -d blib/arch/auto/DNS/Unbound/Unbound.so | grep 'R.*PATH'
       - run: prove -wlmvb t
 
