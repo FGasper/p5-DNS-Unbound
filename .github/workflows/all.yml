@@ -38,6 +38,8 @@ jobs:
         unbound-version:
           - ~
           - '1.15.0'
+          - '1.14.0'
+          - '1.12.0'
 
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
@@ -54,9 +56,9 @@ jobs:
       - if: ${{ matrix.unbound-version }}
         name: Build & install libunbound
         run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
-      - name: Install System libunbound
+      - if: ${{ !matrix.unbound-version }}
+        name: Install System libunbound
         run: apt install -y libunbound-dev
-        if: ${{ !matrix.unbound-version }}
       - name: Install Perl Dependencies
         run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
       - name: perl Makefile.PL
@@ -75,12 +77,26 @@ jobs:
         fedora-tag:
           - 35
           - latest
+        unbound-version:
+          - ~
+          - '1.15.0'
+          - '1.14.0'
+          - '1.12.0'
 
     container:
       image: fedora:${{ matrix.fedora-tag }}
 
     steps:
-      - run: dnf install -y unbound-devel perl git curl
+      - run: dnf install -y perl git curl
+      - name: Install system libunbound
+        if: ${{ !matrix.unbound-version }}
+        run: dnf install -y unbound-devel
+      - name: Install Unbound build dependencies
+        if: ${{ matrix.unbound-version }}
+        run: dnf install -y gcc expat-devel openssl-devel
+      - name: Bulid & install libunbound ${{ matrix.unbound-version }}
+        if: ${{ matrix.unbound-version }}
+        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
       - uses: actions/checkout@v3
         with:
             submodules: recursive
