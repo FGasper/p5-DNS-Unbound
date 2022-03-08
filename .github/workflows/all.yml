@@ -114,6 +114,7 @@ jobs:
         env:
           PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - run: make
+      - run: ldd blib/arch/auto/DNS/Unbound/Unbound.so
       - run: prove -wlmvb t
 
 
