@@ -72,11 +72,13 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         fedora-tag:
           - 35
-          - latest
+          - 34
+          - 28
+#          - latest
         unbound-version:
           - ~
           - '1.15.0'
@@ -93,7 +95,7 @@ jobs:
         run: dnf install -y unbound-devel
       - name: Install Unbound build dependencies
         if: ${{ matrix.unbound-version }}
-        run: dnf install -y gcc expat-devel openssl-devel
+        run: dnf install -y gcc expat-devel openssl-devel pkgconf-pkg-config
       - name: Bulid & install libunbound ${{ matrix.unbound-version }}
         if: ${{ matrix.unbound-version }}
         run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
