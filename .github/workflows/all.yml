@@ -105,6 +105,8 @@ jobs:
       - run: perl -V
       - run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure --with-develop .
       - run: perl Makefile.PL
+        env:
+          PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - run: make
       - run: prove -wlmvb t
 
