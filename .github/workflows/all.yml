@@ -74,7 +74,7 @@ jobs:
         with:
             submodules: recursive
       - run: perl -V
-      - run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure .
+      - run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure --with-develop .
       - run: perl Makefile.PL
       - run: make
       - run: prove -wlmvb t
