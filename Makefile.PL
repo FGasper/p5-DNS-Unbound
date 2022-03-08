@@ -282,7 +282,7 @@ _generate_includes();
 
 my @extra_makefile_args;
 if ($libdir) {
-    push @extra_makefile_args, LDDLFLAGS => "-Wl,-rpath,$libdir $Config{lddlflags}",
+    push @extra_makefile_args, LDDLFLAGS => "-Wl,-rpath-link,$libdir $Config{lddlflags}",
 }
 
 WriteMakefile(
