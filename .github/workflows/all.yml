@@ -53,7 +53,7 @@ jobs:
       - name: make
         run: make
       - name: Run Tests
-        run: make test
+        run: prove -wlvmb t
 
   linux-fedora:
     runs-on: ubuntu-latest
@@ -125,7 +125,8 @@ jobs:
       - run: cd $GITHUB_WORKSPACE
       - run: cpanm --verbose --notest --installdeps --with-configure --with-recommends --with-develop .
       - run: perl Makefile.PL
-      - run: make test
+      - run: make
+      - run: prove -wlvmb t
 
   BSDs:
     runs-on: macos-10.15
