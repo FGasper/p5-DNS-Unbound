@@ -14,59 +14,59 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
-#  linux:
-#    runs-on: ubuntu-latest
-#
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        perl-version:
-#          - '5.34'
-#          - '5.32'
-#          - '5.30'
-#          - '5.28'
-#          - '5.26'
-#          - '5.24'
-#          - '5.22'
-#          - '5.20'
-#          - '5.18'
-#          - '5.16'
-#          - '5.14'
-#          - '5.12'
-#          - '5.10'
-#
-#        unbound-version:
-#          - ~
-#          - '1.15.0'
-#          - '1.14.0'
-#          - '1.12.0'
-#
-#    container:
-#      image: perldocker/perl-tester:${{ matrix.perl-version }}
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#            submodules: recursive
-#      - name: perl -V
-#        run: perl -V
-#      - if: ${{ matrix.unbound-version }}
-#        name: Install libunbound dependencies
-#        run: apt install -y libexpat1-dev libssl-dev
-#      - if: ${{ matrix.unbound-version }}
-#        name: Build & install libunbound
-#        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
-#      - if: ${{ !matrix.unbound-version }}
-#        name: Install System libunbound
-#        run: apt install -y libunbound-dev
-#      - name: Install Perl Dependencies
-#        run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
-#      - name: perl Makefile.PL
-#        run: perl Makefile.PL
-#      - name: make
-#        run: make
-#      - name: Run Tests
-#        run: prove -wlvmb t
+  linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        perl-version:
+          - '5.34'
+          - '5.32'
+          - '5.30'
+          - '5.28'
+          - '5.26'
+          - '5.24'
+          - '5.22'
+          - '5.20'
+          - '5.18'
+          - '5.16'
+          - '5.14'
+          - '5.12'
+          - '5.10'
+
+        unbound-version:
+          - ~
+          - '1.15.0'
+          - '1.14.0'
+          - '1.12.0'
+
+    container:
+      image: perldocker/perl-tester:${{ matrix.perl-version }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
+      - name: perl -V
+        run: perl -V
+      - if: ${{ matrix.unbound-version }}
+        name: Install libunbound dependencies
+        run: apt install -y libexpat1-dev libssl-dev
+      - if: ${{ matrix.unbound-version }}
+        name: Build & install libunbound
+        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound-version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound-version }} && ./configure --with-libunbound-only && make install
+      - if: ${{ !matrix.unbound-version }}
+        name: Install System libunbound
+        run: apt install -y libunbound-dev
+      - name: Install Perl Dependencies
+        run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
+      - name: perl Makefile.PL
+        run: perl Makefile.PL
+      - name: make
+        run: make
+      - name: Run Tests
+        run: prove -wlvmb t
 
   linux-fedora:
     runs-on: ubuntu-latest
@@ -105,9 +105,6 @@ jobs:
       - name: Accommodate unbounds that don’t install pkg-config
         if: ${{ matrix.unbound-version }}
         run: '[ ! -e /usr/local/lib/pkgconfig/libunbound.pc ] && mkdir -p /usr/local/lib/pkgconfig && cp unbound-${{ matrix.unbound-version }}/contrib/libunbound.pc /usr/local/lib/pkgconfig'
-      - name: Confirm .pc file existence
-        if: ${{ matrix.unbound-version }}
-        run: find /usr/local -name '*.pc'
       - uses: actions/checkout@v3
         with:
             submodules: recursive
@@ -117,97 +114,92 @@ jobs:
         env:
           PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - run: make
-      - run: ldd blib/arch/auto/DNS/Unbound/Unbound.so
-      - run: ls -la /usr/local/lib
-      - run: readelf -d blib/arch/auto/DNS/Unbound/Unbound.so
       - run: prove -wlmvb t
-#        env:
-#          LD_LIBRARY_PATH: /usr/local/lib
 
-#  macos:
-#    runs-on: macOS-latest
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#            submodules: recursive
-#      - name: Set up Perl
-#        run: brew install perl unbound
-#      - name: perl -V
-#        run: perl -V
-#      - name: Install Dependencies
-#        run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure --with-recommends --with-develop .
-#      - name: perl Makefile.PL
-#        run: perl Makefile.PL
-#      - name: make
-#        run: make
-#      - name: Run tests (with coverage)
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          curl -L https://cpanmin.us | perl - --notest Devel::Cover::Report::Coveralls
-#          `perl -MConfig -E'print $Config::Config{"sitebin"}'`/cover -test -report Coveralls
-#
-#  cygwin:
-#    runs-on: windows-latest
-#
-#    steps:
-#      - name: Set up Cygwin
-#        uses: egor-tensin/setup-cygwin@v3
-#        with:
-#            platform: x64
-#            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel
-#      - uses: actions/checkout@v3
-#        with:
-#            submodules: recursive
-#      - shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
-#        run: |
-#          pkg-config --cflags libunbound
-#          perl -V
-#          cpan -T App::cpanminus
-#          cd $GITHUB_WORKSPACE
-#          cpanm --verbose --notest --installdeps --with-configure --with-recommends --with-develop .
-#          perl Makefile.PL
-#          make
-#          prove -wlvmb t
-#
-#  BSDs:
-#    runs-on: macos-10.15
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os:
-#          - name: freebsd
-#            version: '12.2'
-#            pkginstall: pkg install -y unbound perl5
-#          - name: freebsd
-#            version: '13.0'
-#            pkginstall: pkg install -y unbound perl5
-#          - name: openbsd
-#            version: '6.9'
-#            pkginstall: pkg_add libunbound `pkg_info -Q pkgconfig`
-##          - name: netbsd
-##            version: '9.2'
-##            pkginstall: pkg_add libunbound
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          submodules: recursive
-#
-#      - name: Test on ${{ matrix.os.name }}
-#        uses: cross-platform-actions/action@v0.3.1
-#        env:
-#          GITHUB_SERVER_URL: $GITHUB_SERVER_URL
-#          GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-#        with:
-#          environment_variables: GITHUB_SERVER_URL GITHUB_REPOSITORY
-#          operating_system: ${{ matrix.os.name }}
-#          version: ${{ matrix.os.version }}
-#          shell: bash
-#          run: |
-#            sudo ${{ matrix.os.pkginstall }}
-#            curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
-#            perl Makefile.PL
-#            make
-#            prove -wlvmb t
+  macos:
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
+      - name: Set up Perl
+        run: brew install perl unbound
+      - name: perl -V
+        run: perl -V
+      - name: Install Dependencies
+        run: curl -L https://cpanmin.us | perl - --notest --installdeps --with-configure --with-recommends --with-develop .
+      - name: perl Makefile.PL
+        run: perl Makefile.PL
+      - name: make
+        run: make
+      - name: Run tests (with coverage)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -L https://cpanmin.us | perl - --notest Devel::Cover::Report::Coveralls
+          `perl -MConfig -E'print $Config::Config{"sitebin"}'`/cover -test -report Coveralls
+
+  cygwin:
+    runs-on: windows-latest
+
+    steps:
+      - name: Set up Cygwin
+        uses: egor-tensin/setup-cygwin@v3
+        with:
+            platform: x64
+            packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
+      - shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+        run: |
+          pkg-config --cflags libunbound
+          perl -V
+          cpan -T App::cpanminus
+          cd $GITHUB_WORKSPACE
+          cpanm --verbose --notest --installdeps --with-configure --with-recommends --with-develop .
+          perl Makefile.PL
+          make
+          prove -wlvmb t
+
+  BSDs:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: freebsd
+            version: '12.2'
+            pkginstall: pkg install -y unbound perl5
+          - name: freebsd
+            version: '13.0'
+            pkginstall: pkg install -y unbound perl5
+          - name: openbsd
+            version: '6.9'
+            pkginstall: pkg_add libunbound `pkg_info -Q pkgconfig`
+#          - name: netbsd
+#            version: '9.2'
+#            pkginstall: pkg_add libunbound
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Test on ${{ matrix.os.name }}
+        uses: cross-platform-actions/action@v0.3.1
+        env:
+          GITHUB_SERVER_URL: $GITHUB_SERVER_URL
+          GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+        with:
+          environment_variables: GITHUB_SERVER_URL GITHUB_REPOSITORY
+          operating_system: ${{ matrix.os.name }}
+          version: ${{ matrix.os.version }}
+          shell: bash
+          run: |
+            sudo ${{ matrix.os.pkginstall }}
+            curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
+            perl Makefile.PL
+            make
+            prove -wlvmb t
