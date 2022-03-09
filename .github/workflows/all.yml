@@ -95,7 +95,7 @@ jobs:
         run: dnf install -y unbound-devel
       - name: Remove system Unbound
         if: ${{ matrix.unbound-version }}
-        run: dnf remove libunbound
+        run: dnf remove -y unbound-libs unbound
       - name: Install Unbound build dependencies
         if: ${{ matrix.unbound-version }}
         run: dnf install -y gcc expat-devel openssl-devel pkgconf-pkg-config
