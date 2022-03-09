@@ -48,7 +48,7 @@ jobs:
 #          - version: '1.6.8'
 #          - version: '1.5.10'
           - version: '1.4.22'
-            openssl_url: https://www.openssl.org/source/old/0.9.x/openssl-0.9.8zf.tar.gz
+            openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0s.tar.gz
 
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
