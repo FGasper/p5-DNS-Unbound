@@ -93,6 +93,9 @@ jobs:
       - name: Install system libunbound
         if: ${{ !matrix.unbound-version }}
         run: dnf install -y unbound-devel
+      - name: Remove system Unbound
+        if: ${{ matrix.unbound-version }}
+        run: dnf remove libunbound
       - name: Install Unbound build dependencies
         if: ${{ matrix.unbound-version }}
         run: dnf install -y gcc expat-devel openssl-devel pkgconf-pkg-config
