@@ -44,6 +44,8 @@ else {
     $_ && chomp for $cflags, $ldflags, $libdir;
 }
 
+$libdir =~ s<\A-L><>;
+
 # In case pkg-config didn’t give us anything.
 if (!$ldflags) {
     warn "I didn’t find libunbound via pkg-config. :(\n";
