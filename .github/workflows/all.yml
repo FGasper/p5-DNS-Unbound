@@ -48,7 +48,7 @@ jobs:
 #          - version: '1.6.8'
 #          - version: '1.5.10'
           - version: '1.4.22'
-            openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0s.tar.gz
+            openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
 
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
@@ -61,7 +61,7 @@ jobs:
         run: perl -V
       - if: ${{ matrix.unbound.openssl_url }}
         name: Build & install OpenSSL
-        run: curl -L ${{ matrix.unbound.openssl_url }} | tar -xvzf - --xform 's/^openssl-[^\/]*/openssl/' && cd openssl && ./config --prefix=$(pwd)/mybuild && make install
+        run: curl -L ${{ matrix.unbound.openssl_url }} | tar -xvzf - --xform 's/^openssl-[^\/]*/openssl/' && cd openssl && ./config -fPIC --prefix=$(pwd)/mybuild && make install
       - if: ${{ matrix.unbound.version }}
         name: Install libunbound dependencies
         run: apt install -y libexpat1-dev ${{ matrix.unbound.openssl_url && ' ' || 'libssl-dev' }}
