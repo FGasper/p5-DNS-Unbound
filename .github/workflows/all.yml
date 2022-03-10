@@ -22,6 +22,7 @@ jobs:
       matrix:
         unbound:
           - version: '1.15.0'
+            skip_pkgconfig_fix: 1
           - version: '1.14.0'
           - version: '1.12.0'
           - version: '1.11.0'
@@ -42,9 +43,12 @@ jobs:
         name: Build & install OpenSSL
         run: curl -L ${{ matrix.unbound.openssl_url }} | tar -xvzf - --xform 's/^openssl-[^\/]*/openssl/' && cd openssl && ./config -fPIC --prefix=$(pwd)/mybuild && make install
       - name: Install Perl & libunbound dependencies
-        run: sudo apt install -y cpanminus libexpat1-dev ${{ matrix.unbound.openssl_url && ' ' || 'libssl-dev' }}
+        run: sudo apt install -y cpanminus pkg-config libexpat1-dev ${{ matrix.unbound.openssl_url && ' ' || 'libssl-dev' }}
       - name: Build & install libunbound
         run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound.version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound.version }} && ./configure --with-libunbound-only ${{ matrix.unbound.openssl_url && '--with-ssl=$(pwd)/../openssl/mybuild' || '' }} && make && sudo make install
+      - name: Accommodate unbounds that don’t install pkg-config
+        if: ${{ !matrix.unbound.skip_pkgconfig_fix }}
+        run: '[ ! -e /usr/local/lib/pkgconfig/libunbound.pc ] && mkdir -p /usr/local/lib/pkgconfig && cp unbound-${{ matrix.unbound-version }}/contrib/libunbound.pc /usr/local/lib/pkgconfig'
       - name: perl -V
         run: perl -V
       - name: Install Perl Dependencies

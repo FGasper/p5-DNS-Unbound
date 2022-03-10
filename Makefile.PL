@@ -58,9 +58,9 @@ if (!$ldflags) {
 
         my @pieces = File::Spec->splitdir($where_ar->[0]);
         pop @pieces;
-        my $dir = File::Spec->catdir(@pieces);
+        $libdir = File::Spec->catdir(@pieces);
 
-        $ldflags = "-L$dir -lunbound";
+        $ldflags = "-L$libdir -lunbound";
 
         if (!$cflags) {
             print "Looking for unbound.h …$/";
