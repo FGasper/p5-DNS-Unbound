@@ -51,6 +51,8 @@ jobs:
         run: cpanm --sudo --notest --installdeps --with-configure --with-recommend --with-develop .
       - name: perl Makefile.PL
         run: perl Makefile.PL
+        env:
+          PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       - name: make
         run: make
       - name: Run Tests
