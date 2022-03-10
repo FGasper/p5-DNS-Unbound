@@ -14,7 +14,49 @@ env:
     PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
 jobs:
-  linux:
+  linux-different-unbounds:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        unbound:
+          - version: '1.15.0'
+          - version: '1.14.0'
+          - version: '1.12.0'
+          - version: '1.11.0'
+          - version: '1.10.1'
+          - version: '1.9.6'
+          - version: '1.8.3'
+          - version: '1.7.3'
+          - version: '1.6.8'
+          - version: '1.5.10'
+          - version: '1.4.22'
+            openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            submodules: recursive
+      - if: ${{ matrix.unbound.openssl_url }}
+        name: Build & install OpenSSL
+        run: curl -L ${{ matrix.unbound.openssl_url }} | tar -xvzf - --xform 's/^openssl-[^\/]*/openssl/' && cd openssl && ./config -fPIC --prefix=$(pwd)/mybuild && make install
+      - name: Install Perl & libunbound dependencies
+        run: sudo apt install -y cpanminus libexpat1-dev ${{ matrix.unbound.openssl_url && ' ' || 'libssl-dev' }}
+      - name: Build & install libunbound
+        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound.version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound.version }} && ./configure --with-libunbound-only ${{ matrix.unbound.openssl_url && '--with-ssl=$(pwd)/../openssl/mybuild' || '' }} && make && sudo make install
+      - name: perl -V
+        run: perl -V
+      - name: Install Perl Dependencies
+        run: cpanm --sudo --notest --installdeps --with-configure --with-recommend --with-develop .
+      - name: perl Makefile.PL
+        run: perl Makefile.PL
+      - name: make
+        run: make
+      - name: Run Tests
+        run: prove -wlvmb t
+
+  linux-different-perls:
     runs-on: ubuntu-latest
 
     strategy:
@@ -35,23 +77,6 @@ jobs:
           - '5.12'
           - '5.10'
 
-        unbound:
-          - version: ~
-          - version: '1.15.0'
-          - version: '1.14.0'
-          - version: '1.12.0'
-          - version: '1.11.0'
-          - version: '1.10.1'
-          - version: '1.9.6'
-          - version: '1.8.3'
-          - version: '1.7.3'
-          - version: '1.6.8'
-          - version: '1.5.10'
-          - version: '1.4.22'
-            openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
-#          - version: '1.3.4'
-#           openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
-
     container:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
 
@@ -61,17 +86,7 @@ jobs:
             submodules: recursive
       - name: perl -V
         run: perl -V
-      - if: ${{ matrix.unbound.openssl_url }}
-        name: Build & install OpenSSL
-        run: curl -L ${{ matrix.unbound.openssl_url }} | tar -xvzf - --xform 's/^openssl-[^\/]*/openssl/' && cd openssl && ./config -fPIC --prefix=$(pwd)/mybuild && make install
-      - if: ${{ matrix.unbound.version }}
-        name: Install libunbound dependencies
-        run: apt install -y libexpat1-dev ${{ matrix.unbound.openssl_url && ' ' || 'libssl-dev' }}
-      - if: ${{ matrix.unbound.version }}
-        name: Build & install libunbound
-        run: curl -L https://www.nlnetlabs.nl/downloads/unbound/unbound-${{ matrix.unbound.version }}.tar.gz | tar -xvzf - && cd unbound-${{ matrix.unbound.version }} && ./configure --with-libunbound-only ${{ matrix.unbound.openssl_url && '--with-ssl=$(pwd)/../openssl/mybuild' || '' }} && make && make install
-      - if: ${{ !matrix.unbound.version }}
-        name: Install System libunbound
+      - name: Install System libunbound
         run: apt install -y libunbound-dev
       - name: Install Perl Dependencies
         run: cpanm --notest --installdeps --with-configure --with-recommend --with-develop .
