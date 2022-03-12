@@ -67,7 +67,10 @@ for my $use_threads_yn ( 0, 1 ) {
         } @tlds;
 
         diag __FILE__ . ": Waiting on: @tlds";
-        $dns->wait() while $done_count < @tlds;
+        while ($done_count < @tlds) {
+            diag "wait()ing …";
+            $dns->wait();
+        }
     }
 }
 

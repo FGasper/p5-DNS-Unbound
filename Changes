@@ -14,6 +14,7 @@ Revision history for Perl module DNS::Unbound
 - Require a new-ish X::Tiny (since tests assume it).
 - Fix trivial warning in Makefile.PL.
 - Make feature-detection logic mimic build configuration better.
+- Test suite is much “quieter”.
 
 0.28 Wed, 15 Dec 2021
 - Make all Unbound-created errors X::Tiny::Base instances.
