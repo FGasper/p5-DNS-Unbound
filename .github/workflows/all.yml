@@ -226,11 +226,7 @@ jobs:
 
       - name: Test on ${{ matrix.os.name }}
         uses: cross-platform-actions/action@v0.3.1
-        env:
-          GITHUB_SERVER_URL: $GITHUB_SERVER_URL
-          GITHUB_REPOSITORY: $GITHUB_REPOSITORY
         with:
-          environment_variables: GITHUB_SERVER_URL GITHUB_REPOSITORY
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
           shell: bash

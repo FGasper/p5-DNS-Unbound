@@ -9,7 +9,7 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG 1
+#define DEBUG 0
 
 #ifdef MULTIPLICITY
 #define NEED_THX 1

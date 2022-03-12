@@ -775,18 +775,26 @@ sub DESTROY {
 
 1;
 
-=head1 SEE ALSO
+=head1 KNOWN ISSUES
 
-L<Net::DNS::Resolver::Unbound> provides generally-comparable functionality
-but as a subclass of L<Net::DNS::Resolver>.
+Some tests occasionally fail due to segmentation faults. This seems
+particularly likely with unbound 1.13.2 on Fedora Core 34. As it happens
+while Perl polls on libunbound’s file descriptor, I believe this is due
+to a bug in unbound, not in this library. Notably, no such failures have
+been reported in production.
+
+=head1 SEE ALSO
 
 L<Net::DNS::Resolver::Recurse> provides comparable logic to this module
 in pure Perl. Like Unbound, it is maintained by
 L<NLnet Labs|https://nlnetlabs.nl/>.
 
+L<Net::DNS::Resolver::Unbound> is another XS binding to Unbound,
+implemented as a subclass of L<Net::DNS::Resolver>.
+
 =head1 LICENSE & COPYRIGHT
 
-Copyright 2019-2021 Gasper Software Consulting.
+Copyright 2019-2022 Gasper Software Consulting.
 
 This library is licensed under the same terms as Perl itself.
 
