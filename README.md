@@ -261,14 +261,6 @@ and expected.
 Decodes a list of character-strings into component strings,
 returned as an array reference. Useful for `TXT` query results.
 
-# KNOWN ISSUES
-
-Some tests occasionally fail due to segmentation faults. This seems
-particularly likely with unbound 1.13.2 on Fedora Core 34. As it happens
-while Perl polls on libunbound’s file descriptor, I believe this is due
-to a bug in unbound, not in this library. Notably, no such failures have
-been reported in production.
-
 # SEE ALSO
 
 [Net::DNS::Resolver::Recurse](https://metacpan.org/pod/Net%3A%3ADNS%3A%3AResolver%3A%3ARecurse) provides comparable logic to this module

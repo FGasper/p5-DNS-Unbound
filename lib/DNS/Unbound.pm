@@ -8,7 +8,7 @@ use XSLoader ();
 our ($VERSION);
 
 BEGIN {
-    $VERSION = '0.29_03';
+    $VERSION = '0.29';
     XSLoader::load( __PACKAGE__, $VERSION );
 }
 
@@ -774,14 +774,6 @@ sub DESTROY {
 }
 
 1;
-
-=head1 KNOWN ISSUES
-
-Some tests occasionally fail due to segmentation faults. This seems
-particularly likely with unbound 1.13.2 on Fedora Core 34. As it happens
-while Perl polls on libunbound’s file descriptor, I believe this is due
-to a bug in unbound, not in this library. Notably, no such failures have
-been reported in production.
 
 =head1 SEE ALSO
 
