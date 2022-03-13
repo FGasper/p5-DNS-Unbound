@@ -115,11 +115,13 @@ jobs:
           - 34
           - 29
           # - latest
-        unbound-version:
-          - ~
-          - '1.15.0'
-          - '1.14.0'
-          - '1.12.0'
+        include:
+          - fedora-tag: 35
+            unbound-version:
+              - ~
+              - '1.15.0'
+              - '1.14.0'
+              - '1.12.0'
 
     container:
       image: fedora:${{ matrix.fedora-tag }}
