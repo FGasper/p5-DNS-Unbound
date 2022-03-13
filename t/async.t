@@ -54,9 +54,13 @@ for my $use_threads_yn ( 0, 1 ) {
         my $fd = $dns->fd();
 
         vec( my $rin = q<>, $fd, 1 ) = 1;
-        select( my $rout = $rin, undef, undef, undef );
 
         diag __FILE__ . ": Waiting on $name vvvvvvvvvvvvv";
+
+        select( my $rout = $rin, undef, undef, undef );
+
+        diag __FILE__ . ": polling done; reaping …";
+
         $dns->process();
     }
 
@@ -84,7 +88,7 @@ for my $use_threads_yn ( 0, 1 ) {
             } );
         } @tlds;
 
-        diag __FILE__ . ": Waiting on: @tlds";
+        diag __FILE__ . ": Sent queries: @tlds";
 
         my $fd = $dns->fd();
         my $rin = q<>;
