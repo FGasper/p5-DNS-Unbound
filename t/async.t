@@ -104,9 +104,10 @@ for my $use_threads_yn ( 0, 1 ) {
             'poll() gives truthy when there’s something to read',
         );
 
-        diag __FILE__ . ": Waiting for all queries to finish";
-
-        $dns->wait() while $done_count < @tlds;
+        while ($done_count < @tlds) {
+            diag __FILE__ . ": Waiting for all queries to finish ($done_count done)";
+            $dns->wait();  # should only run once, but just in case
+        }
 
         ok(
             !$dns->poll(),
