@@ -7,6 +7,12 @@ use Test::More;
 use Test::FailWarnings;
 use Test::Deep;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use MyTest;
+
+MyTest::set_timeout();
+
 use_ok('DNS::Unbound');
 
 diag( "libunbound " . DNS::Unbound::unbound_version() );

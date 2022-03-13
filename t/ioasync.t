@@ -6,6 +6,12 @@ use warnings;
 use Test::More;
 use Test::FailWarnings;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use MyTest;
+
+MyTest::set_timeout();
+
 for my $mod ( qw( IO::Async::Loop  IO::Async::Handle ) ) {
     eval "require $mod" or plan skip_all => "No $mod: $@";
 }

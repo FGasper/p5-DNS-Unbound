@@ -48,6 +48,7 @@ t/debugout_bug.t
 t/debugout_no_fd_leak.t
 t/hosts.t
 t/ioasync.t
+t/lib/MyTest.pm
 t/load.t
 t/mojo.t
 t/option.t

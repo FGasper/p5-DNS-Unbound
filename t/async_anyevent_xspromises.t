@@ -8,6 +8,12 @@ use Test::More;
 # This leaks.
 #use Test::FailWarnings;
 
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use MyTest;
+
+MyTest::set_timeout();
+
 for my $mod ( qw( AnyEvent  AnyEvent::XSPromises ) ) {
     eval "require $mod" or plan skip_all => "No $mod: $@";
 }
