@@ -89,7 +89,14 @@ static SV* _my_new_blessedstruct_f (pTHX_ unsigned size, const char* classname) 
 } STMT_END
 
 static bool _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
+
+    if (dub_ctx->refcount == 0) {
+        _DEBUG("DNS__Unbound__Context %p is already free", dub_ctx);
+        return false;
+    }
+
     if (!--dub_ctx->refcount) {
+
         _DEBUG("Freeing DNS__Unbound__Context %p", dub_ctx);
 
         if ((getpid() == dub_ctx->pid) && PL_dirty) {
@@ -597,7 +604,7 @@ void
 DESTROY (DNS__Unbound__Context* dub_ctx)
     CODE:
         _DEBUG("%s", __func__);
-
+        if (getpid() != dub_ctx->pid) return;
         _decrement_dub_ctx_refcount(aTHX_ dub_ctx);
 
 # ----------------------------------------------------------------------
