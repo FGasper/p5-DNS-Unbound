@@ -8,6 +8,8 @@ use Test::FailWarnings;
 
 use_ok('DNS::Unbound');
 
+alarm 60;
+
 my $QNAME = 'org';
 my $QTYPE = 'A';
 
