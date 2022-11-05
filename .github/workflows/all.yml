@@ -39,7 +39,7 @@ jobs:
             openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - if: ${{ matrix.unbound.openssl_url }}
@@ -72,6 +72,7 @@ jobs:
       fail-fast: false
       matrix:
         perl-version:
+          - '5.36'
           - '5.34'
           - '5.32'
           - '5.30'
@@ -90,7 +91,7 @@ jobs:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - name: perl -V
@@ -113,6 +114,7 @@ jobs:
       fail-fast: false
       matrix:
         context:
+          - fedora: latest
           - fedora: 35
           - fedora: 35
             unbound: '1.15.0'
@@ -143,7 +145,7 @@ jobs:
       - name: Accommodate unbounds that don’t install pkg-config
         if: ${{ matrix.context.unbound }}
         run: '[ ! -e /usr/local/lib/pkgconfig/libunbound.pc ] && ls -laR . && mkdir -p /usr/local/lib/pkgconfig && cp unbound-${{ matrix.context.unbound }}/contrib/libunbound.pc /usr/local/lib/pkgconfig'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - run: perl -V
@@ -158,7 +160,7 @@ jobs:
     runs-on: macOS-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - name: Set up Perl
@@ -187,7 +189,7 @@ jobs:
         with:
             platform: x64
             packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
@@ -208,26 +210,31 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - name: freebsd
-          version: '12.2'
-          pkginstall: pkg install -y unbound perl5
+
+        # As of 5 Nov 2022 perl complains about missing strerror_l@FBSD_1.6.
+        # - name: freebsd
+        #   version: '12.2'
+        #   pkginstall: pkg install -y unbound perl5
+
         - name: freebsd
           version: '13.0'
           pkginstall: pkg install -y unbound perl5
+
+        # As of 5 Nov 2022 packages don’t install in OpenBSD 6.9.
         - name: openbsd
-          version: '6.9'
+          version: '7.1'
           pkginstall: pkg_add libunbound `pkg_info -Q pkgconfig`
 #        - name: netbsd
 #          version: '9.2'
 #          pkginstall: pkg_add libunbound
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
           submodules: recursive
 
       - name: Test on ${{ matrix.os.name }}
-        uses: cross-platform-actions/action@v0.3.1
+        uses: cross-platform-actions/action@master
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
