@@ -10,7 +10,7 @@ DNS::Unbound - Query DNS recursively via [libunbound](https://www.nlnetlabs.nl/d
 
     my $dns = DNS::Unbound->new()->set_option( verbosity => 2 );
 
-    # This appears to be safe:
+    # Faster, but dicey if you fork:
     $dns->enable_threads();
 
     my $verbosity = $dns->get_option( 'verbosity' );
@@ -135,6 +135,10 @@ to use in tandem with this one to get your query result.
 Sets _OBJ_’s asynchronous queries to use threads rather than forking.
 Off by default. Throws an exception if called after an asynchronous query has
 already been sent.
+
+This is more performant than the default (forking) mode, but it can cause
+problems if your application forks; thus, threaded Unbounds **CANNOT** be
+used in subprocesses.
 
 Returns _OBJ_.
 
