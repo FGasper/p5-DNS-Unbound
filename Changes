@@ -1,5 +1,10 @@
 Revision history for Perl module DNS::Unbound
 
+0.30
+- Forgo Unbound cleanup in subprocesses. This avoids an issue with libunbound
+  in newer OSes (https://github.com/NLnetLabs/unbound/issues/775).
+- Forbid interaction with a threaded Unbound object in subprocesses.
+
 0.29 Sat, 12 Mar 2022
 - Reject NULs in input strings where relevant.
 - Tweak memory handling. This hopefully will stop the random

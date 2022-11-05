@@ -34,6 +34,7 @@ typedef struct {
     HV* queries_hv;
     unsigned refcount;
     int debugfd;    /* -1 means no stored debug out */
+    bool threaded;
 } DNS__Unbound__Context;
 
 typedef struct {
@@ -92,15 +93,24 @@ static bool _decrement_dub_ctx_refcount (pTHX_ DNS__Unbound__Context* dub_ctx) {
     if (!--dub_ctx->refcount) {
         _DEBUG("Freeing DNS__Unbound__Context %p", dub_ctx);
 
-        if ((getpid() == dub_ctx->pid) && PL_dirty) {
-            warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
+        // To avoid a hang in subprocesses, we forgo ub_ctx_delete() except
+        // in the original process. This accommodates an upstream bug that
+        // seems to affect (at least) AlmaLinux 9 and Ubuntu 22:
+        //
+        // https://github.com/NLnetLabs/unbound/issues/775
+        //
+        if (getpid() == dub_ctx->pid) {
+            if (PL_dirty) {
+                warn("Freeing DNS::Unbound context at global destruction; memory leak likely!");
+            }
+
+            // We do NOT need to _close_saved_debugfd() here because
+            // Unbound will do that for us.
+
+            ub_ctx_delete(dub_ctx->ub_ctx);
+
+            dub_ctx->ub_ctx = NULL;
         }
-
-        // We do NOT need to _close_saved_debugfd() here because
-        // Unbound will do that for us.
-
-        ub_ctx_delete(dub_ctx->ub_ctx);
-        dub_ctx->ub_ctx = NULL;
 
         SvREFCNT_dec((SV*) dub_ctx->queries_hv);
 
@@ -275,6 +285,12 @@ static void _close_saved_debugfd (DNS__Unbound__Context* ctx) {
         if (-1 != ctx->debugfd) close(ctx->debugfd);
 }
 
+static inline void _croak_if_pid_changed_and_threaded(pTHX_ DNS__Unbound__Context* ctx) {
+    if (ctx->threaded && (getpid() != ctx->pid)) {
+        croak("Illegal attempt to use threaded DNS::Unbound instance in subprocess");
+    }
+}
+
 // ----------------------------------------------------------------------
 
 MODULE = DNS::Unbound           PACKAGE = DNS::Unbound
@@ -326,6 +342,7 @@ PROTOTYPES: DISABLE
 int
 _ub_ctx_set_option( DNS__Unbound__Context* ctx, const char* opt, SV* val_sv)
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *val = exs_SvPVbyte_nolen(val_sv);
         RETVAL = ub_ctx_set_option(ctx->ub_ctx, opt, val);
     OUTPUT:
@@ -334,11 +351,13 @@ _ub_ctx_set_option( DNS__Unbound__Context* ctx, const char* opt, SV* val_sv)
 void
 _ub_ctx_debuglevel( DNS__Unbound__Context* ctx, int d )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         ub_ctx_debuglevel(ctx->ub_ctx, d);
 
 void
 _ub_ctx_debugout( DNS__Unbound__Context* ctx, int fd, SV *mode_sv )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *mode = exs_SvPVbyte_nolen(mode_sv);
         FILE *fstream;
 
@@ -383,6 +402,8 @@ _ub_ctx_debugout( DNS__Unbound__Context* ctx, int fd, SV *mode_sv )
 SV*
 _ub_ctx_get_option( DNS__Unbound__Context* ctx, SV* opt)
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
+
         char *str;
 
         char *opt_str = exs_SvPVbyte_nolen(opt);
@@ -408,6 +429,7 @@ _ub_ctx_get_option( DNS__Unbound__Context* ctx, SV* opt)
 int
 _ub_ctx_add_ta( DNS__Unbound__Context* ctx, SV *ta )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *ta_str = exs_SvPVbyte_nolen(ta);
         RETVAL = ub_ctx_add_ta( ctx->ub_ctx, ta_str );
     OUTPUT:
@@ -417,6 +439,7 @@ _ub_ctx_add_ta( DNS__Unbound__Context* ctx, SV *ta )
 int
 _ub_ctx_add_ta_autr( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_add_ta_autr( ctx->ub_ctx, fname_str );
     OUTPUT:
@@ -427,6 +450,7 @@ _ub_ctx_add_ta_autr( DNS__Unbound__Context* ctx, SV *fname )
 int
 _ub_ctx_resolvconf( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *fname = SvOK(fname_sv) ? exs_SvPVbyte_nolen(fname_sv) : NULL;
 
         RETVAL = ub_ctx_resolvconf( ctx->ub_ctx, fname );
@@ -436,6 +460,7 @@ _ub_ctx_resolvconf( DNS__Unbound__Context* ctx, SV *fname_sv )
 int
 _ub_ctx_hosts( DNS__Unbound__Context* ctx, SV *fname_sv )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *fname = SvOK(fname_sv) ? exs_SvPVbyte_nolen(fname_sv) : NULL;
 
         RETVAL = ub_ctx_hosts( ctx->ub_ctx, fname );
@@ -445,6 +470,7 @@ _ub_ctx_hosts( DNS__Unbound__Context* ctx, SV *fname_sv )
 int
 _ub_ctx_add_ta_file( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_add_ta_file( ctx->ub_ctx, fname_str );
     OUTPUT:
@@ -453,6 +479,7 @@ _ub_ctx_add_ta_file( DNS__Unbound__Context* ctx, SV *fname )
 int
 _ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *fname_str = exs_SvPVbyte_nolen(fname);
         RETVAL = ub_ctx_trustedkeys( ctx->ub_ctx, fname_str );
     OUTPUT:
@@ -461,13 +488,17 @@ _ub_ctx_trustedkeys( DNS__Unbound__Context* ctx, SV *fname )
 int
 _ub_ctx_async( DNS__Unbound__Context* ctx, int dothread )
     CODE:
-        RETVAL = ub_ctx_async( ctx->ub_ctx, dothread );
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
+        int ret = ub_ctx_async( ctx->ub_ctx, dothread );
+        if (!ret) ctx->threaded = dothread;
+        RETVAL = ret;
     OUTPUT:
         RETVAL
 
 int
 _ub_poll( DNS__Unbound__Context* ctx )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         RETVAL = ub_poll(ctx->ub_ctx);
     OUTPUT:
         RETVAL
@@ -475,6 +506,7 @@ _ub_poll( DNS__Unbound__Context* ctx )
 int
 _ub_wait( DNS__Unbound__Context* ctx )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         RETVAL = ub_wait(ctx->ub_ctx);
     OUTPUT:
         RETVAL
@@ -482,6 +514,7 @@ _ub_wait( DNS__Unbound__Context* ctx )
 int
 _ub_process( DNS__Unbound__Context* ctx )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
 
         // Never ub_ctx_delete(ub_ctx) while using ub_ctx:
         _increment_dub_ctx_refcount(ctx);
@@ -505,6 +538,7 @@ _count_pending_queries ( DNS__Unbound__Context* ctx )
 int
 _ub_cancel( DNS__Unbound__Context* ctx, int async_id )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         int result = ub_cancel(ctx->ub_ctx, async_id);
 
         if (!result) {
@@ -520,6 +554,7 @@ _ub_cancel( DNS__Unbound__Context* ctx, int async_id )
 int
 _ub_fd( DNS__Unbound__Context* ctx )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         RETVAL = ub_fd(ctx->ub_ctx);
     OUTPUT:
         RETVAL
@@ -527,6 +562,7 @@ _ub_fd( DNS__Unbound__Context* ctx )
 SV*
 _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV *callback )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         char *name = exs_SvPVbyte_nolen(name_sv);
 
         int async_id = 0;
@@ -559,6 +595,7 @@ _resolve_async( DNS__Unbound__Context* ctx, SV *name_sv, int type, int class, SV
 SV*
 _resolve( DNS__Unbound__Context* ctx, SV *name, int type, int class = 1 )
     CODE:
+        _croak_if_pid_changed_and_threaded(aTHX_ ctx);
         struct ub_result* result;
         int retval;
 
