@@ -56,5 +56,6 @@ t/parallel.t
 t/resolvconf.t
 t/resolvconf_unpriv.t
 t/resolve_error.t
+t/subprocess_threaded_cleanup.t
 t/trust.t
 typemap
