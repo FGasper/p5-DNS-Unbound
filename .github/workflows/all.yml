@@ -37,7 +37,7 @@ jobs:
             openssl_url: https://www.openssl.org/source/old/1.0.0/openssl-1.0.0t.tar.gz
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - if: ${{ matrix.unbound.openssl_url }}
@@ -88,7 +88,7 @@ jobs:
       image: perldocker/perl-tester:${{ matrix.perl-version }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - name: perl -V
@@ -156,7 +156,7 @@ jobs:
     runs-on: macOS-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - name: Set up Perl
@@ -181,11 +181,11 @@ jobs:
 
     steps:
       - name: Set up Cygwin
-        uses: egor-tensin/setup-cygwin@v3
+        uses: cygwin/cygwin-install-action@master
         with:
             platform: x64
             packages: perl_base perl-ExtUtils-MakeMaker make gcc-g++ libcrypt-devel bash libunbound-devel libnsl-devel
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
             submodules: recursive
       - shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
@@ -215,12 +215,15 @@ jobs:
         - name: openbsd
           version: '6.9'
           pkginstall: pkg_add libunbound `pkg_info -Q pkgconfig`
+        - name: openbsd
+          version: '7.2'
+          pkginstall: pkg_add libunbound `pkg_info -Q pkgconfig`
 #        - name: netbsd
 #          version: '9.2'
 #          pkginstall: pkg_add libunbound
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
         with:
           submodules: recursive
 
